@@ -47,8 +47,16 @@ class EmailService {
       // Si la fecha viene con información de zona horaria, interpretarla como UTC
       if (typeof date === 'string' && date.includes('T')) {
         console.log('  - Processing as UTC string');
+        
+        // Si la fecha ya tiene zona horaria -04:00, removerla y tratar como UTC
+        let dateToProcess = date;
+        if (date.includes('-04:00')) {
+          console.log('  - Removing -04:00 timezone info');
+          dateToProcess = date.replace('-04:00', '');
+        }
+        
         // Crear fecha interpretando como UTC
-        const utcDate = moment.utc(date);
+        const utcDate = moment.utc(dateToProcess);
         console.log('  - UTC moment:', utcDate.format());
         // Convertir a zona horaria venezolana
         const venezuelanDate = utcDate.tz('America/Caracas');
