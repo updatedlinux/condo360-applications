@@ -174,6 +174,7 @@ class Condo360Solicitudes {
             'nonce' => wp_create_nonce('condo360_nonce'),
             'api_url' => CONDO360_SOLICITUDES_API_URL,
             'current_user_id' => is_user_logged_in() ? get_current_user_id() : 0,
+            'per_page' => 20, // Valor por defecto
             'messages' => array(
                 'loading' => __('Cargando...', 'condo360-solicitudes'),
                 'error' => __('Ha ocurrido un error', 'condo360-solicitudes'),
@@ -309,6 +310,7 @@ class Condo360Solicitudes {
                 <div id="condo360-requests-list">
                     <div class="loading"><?php _e('Cargando solicitudes...', 'condo360-solicitudes'); ?></div>
                 </div>
+                <div class="condo360-pagination" id="condo360-pagination"></div>
             </div>
             <?php endif; ?>
         </div>
@@ -435,6 +437,15 @@ class Condo360Solicitudes {
                 </div>
             </div>
         </div>
+        
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Configurar per_page para el admin panel
+            if (typeof condo360_ajax !== 'undefined') {
+                condo360_ajax.per_page = <?php echo intval($atts['per_page']); ?>;
+            }
+        });
+        </script>
         <?php
         return ob_get_clean();
     }

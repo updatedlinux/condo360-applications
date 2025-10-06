@@ -325,17 +325,22 @@
             const container = $('#condo360-requests-list');
             container.html('<div class="loading">' + this.config.messages.loading + '</div>');
             
+            const perPage = condo360_ajax.per_page || 20;
+            
             $.ajax({
                 url: this.config.ajaxUrl,
                 type: 'POST',
                 data: {
                     action: 'condo360_get_requests',
                     nonce: this.config.nonce,
-                    user_id: condo360_ajax.current_user_id || null
+                    user_id: condo360_ajax.current_user_id || null,
+                    page: this.state.currentPage,
+                    limit: perPage
                 },
                 success: (response) => {
                     if (response.success) {
                         this.renderUserRequests(response.data.data);
+                        this.renderPagination(response.data.pagination, 'user');
                     } else {
                         container.html('<div class="message error">No se pudieron cargar las solicitudes</div>');
                     }
@@ -447,9 +452,11 @@
             const container = $('#admin-requests-list');
             container.html('<tr><td colspan="6" class="loading">' + this.config.messages.loading + '</td></tr>');
             
+            const perPage = condo360_ajax.per_page || 20;
+            
             const params = {
                 page: this.state.currentPage,
-                limit: 20,
+                limit: perPage,
                 ...this.state.currentFilters
             };
             
@@ -460,7 +467,7 @@
                 success: (response) => {
                     if (response.success) {
                         this.renderAdminRequests(response.data);
-                        this.renderPagination(response.pagination);
+                        this.renderPagination(response.pagination, 'admin');
                     } else {
                         container.html('<tr><td colspan="6" class="message error">Error al cargar solicitudes</td></tr>');
                     }
@@ -505,10 +512,10 @@
         },
         
         // Renderizar paginación
-        renderPagination: function(pagination) {
-            const container = $('#admin-pagination');
+        renderPagination: function(pagination, type = 'admin') {
+            const container = type === 'admin' ? $('#admin-pagination') : $('#condo360-pagination');
             
-            if (pagination.totalPages <= 1) {
+            if (!pagination || pagination.totalPages <= 1) {
                 container.empty();
                 return;
             }
@@ -552,7 +559,15 @@
             const page = parseInt($(e.target).data('page'));
             if (page && page !== this.state.currentPage) {
                 this.state.currentPage = page;
-                this.loadAdminRequests();
+                
+                // Determinar si es admin o usuario basado en el contenedor
+                const isAdmin = $(e.target).closest('#admin-pagination').length > 0;
+                
+                if (isAdmin) {
+                    this.loadAdminRequests();
+                } else {
+                    this.loadUserRequests();
+                }
             }
         },
         

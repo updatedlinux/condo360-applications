@@ -459,11 +459,13 @@
 }
 
 /* Paginación */
-.admin-pagination {
+.admin-pagination,
+.condo360-pagination {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 10px;
+    margin: 20px 0;
 }
 
 .pagination-btn {
