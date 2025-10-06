@@ -87,7 +87,11 @@ class RequestModel {
       LIMIT ? OFFSET ?
     `;
     
-    return await this.db.query(sql, [wp_user_id, limit, offset]);
+    // Convertir a enteros para evitar errores de MySQL
+    const limitInt = parseInt(limit, 10);
+    const offsetInt = parseInt(offset, 10);
+    
+    return await this.db.query(sql, [wp_user_id, limitInt, offsetInt]);
   }
 
   /**
@@ -105,7 +109,11 @@ class RequestModel {
       LIMIT ? OFFSET ?
     `;
     
-    return await this.db.query(sql, [limit, offset]);
+    // Convertir a enteros para evitar errores de MySQL
+    const limitInt = parseInt(limit, 10);
+    const offsetInt = parseInt(offset, 10);
+    
+    return await this.db.query(sql, [limitInt, offsetInt]);
   }
 
   /**

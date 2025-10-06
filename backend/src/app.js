@@ -18,6 +18,9 @@ const { formatDatesMiddleware } = require('./middleware/dateFormatter');
 const app = express();
 const PORT = process.env.PORT || 7000;
 
+// Configurar trust proxy para manejar headers X-Forwarded-For
+app.set('trust proxy', true);
+
 // Configuración de Swagger
 const swaggerOptions = {
   definition: {

@@ -173,6 +173,7 @@ class Condo360Solicitudes {
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('condo360_nonce'),
             'api_url' => CONDO360_SOLICITUDES_API_URL,
+            'current_user_id' => is_user_logged_in() ? get_current_user_id() : 0,
             'messages' => array(
                 'loading' => __('Cargando...', 'condo360-solicitudes'),
                 'error' => __('Ha ocurrido un error', 'condo360-solicitudes'),
