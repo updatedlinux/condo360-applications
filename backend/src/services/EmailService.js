@@ -34,13 +34,13 @@ class EmailService {
   }
 
   /**
-   * Formatear fecha usando JavaScript nativo (más confiable)
+   * Formatear fecha restando 4 horas manualmente (solución directa)
    * @param {string|Date} date - Fecha a formatear
    * @returns {string} - Fecha formateada correctamente
    */
-  formatDateNative(date) {
+  formatDateManual(date) {
     try {
-      console.log('🔍 DEBUG formatDateNative:');
+      console.log('🔍 DEBUG formatDateManual:');
       console.log('  - Input date:', date);
       
       // Convertir a objeto Date si es necesario
@@ -54,25 +54,26 @@ class EmailService {
       console.log('  - Date object:', dateObj);
       console.log('  - Date ISO:', dateObj.toISOString());
       
-      // Crear fecha en zona horaria venezolana usando Intl.DateTimeFormat
-      const venezuelanDate = new Date(dateObj.toLocaleString("en-US", {timeZone: "America/Caracas"}));
-      console.log('  - Venezuelan Date:', venezuelanDate);
+      // Restar 4 horas manualmente (GMT-4)
+      const venezuelanTime = new Date(dateObj.getTime() - (4 * 60 * 60 * 1000));
+      console.log('  - Venezuelan time (manual):', venezuelanTime);
+      console.log('  - Venezuelan ISO:', venezuelanTime.toISOString());
       
       // Formatear manualmente
-      const day = venezuelanDate.getDate().toString().padStart(2, '0');
-      const month = (venezuelanDate.getMonth() + 1).toString().padStart(2, '0');
-      const year = venezuelanDate.getFullYear();
-      const hours = venezuelanDate.getHours();
-      const minutes = venezuelanDate.getMinutes().toString().padStart(2, '0');
+      const day = venezuelanTime.getUTCDate().toString().padStart(2, '0');
+      const month = (venezuelanTime.getUTCMonth() + 1).toString().padStart(2, '0');
+      const year = venezuelanTime.getUTCFullYear();
+      const hours = venezuelanTime.getUTCHours();
+      const minutes = venezuelanTime.getUTCMinutes().toString().padStart(2, '0');
       const ampm = hours >= 12 ? 'PM' : 'AM';
       const displayHours = hours % 12 || 12;
       
       const formatted = `${day}/${month}/${year} a las ${displayHours}:${minutes} ${ampm}`;
-      console.log('  - Native formatted:', formatted);
+      console.log('  - Manual formatted:', formatted);
       
       return formatted;
     } catch (error) {
-      console.error('Error en formatDateNative:', error);
+      console.error('Error en formatDateManual:', error);
       return date;
     }
   }
@@ -304,7 +305,7 @@ class EmailService {
    */
   async sendRequestConfirmation(request, user) {
     try {
-      const formattedDate = this.formatDateNative(request.created_at);
+      const formattedDate = this.formatDateManual(request.created_at);
       
       let mudanzaDetails = '';
       if (request.request_type.includes('Mudanza')) {
@@ -395,7 +396,7 @@ class EmailService {
    */
   async sendRequestResponse(request, user) {
     try {
-      const formattedDate = this.formatDateNative(request.updated_at);
+      const formattedDate = this.formatDateManual(request.updated_at);
       
       let statusColor = this.secondaryColor;
       let statusText = request.status;
