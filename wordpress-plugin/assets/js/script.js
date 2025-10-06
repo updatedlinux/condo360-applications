@@ -127,9 +127,22 @@
             
             // Agregar evento para validar fechas
             dateInput.on('change', this.validateMoveDate.bind(this));
+            dateInput.on('input', this.validateMoveDate.bind(this));
             
             // Agregar tooltip informativo
             dateInput.attr('title', 'Solo se permiten sábados para mudanzas');
+            
+            // Agregar atributo step para restringir días
+            dateInput.attr('step', '7'); // Solo permite saltos de 7 días (sábados)
+            
+            // Agregar evento click para mostrar solo sábados
+            dateInput.on('click', function() {
+                // Forzar que solo se puedan seleccionar sábados
+                const currentValue = $(this).val();
+                if (currentValue && !Condo360Solicitudes.isValidSaturdayVenezuela(currentValue)) {
+                    $(this).val('');
+                }
+            });
         },
         
         // Obtener el próximo sábado
@@ -220,8 +233,15 @@
             const dateInput = $(e.target);
             const selectedDate = dateInput.val();
             
+            if (!selectedDate) {
+                this.clearFieldError(dateInput);
+                return true;
+            }
+            
+            // Verificar que sea sábado en zona horaria venezolana
             if (!this.isValidSaturdayVenezuela(selectedDate)) {
                 this.showFieldError(dateInput, 'Las mudanzas solo pueden ser programadas para sábados (zona horaria Venezuela GMT-4)');
+                dateInput.val(''); // Limpiar el campo
                 return false;
             }
             
@@ -230,6 +250,17 @@
             
             if (selectedDate < today) {
                 this.showFieldError(dateInput, 'La fecha de mudanza debe ser futura');
+                dateInput.val(''); // Limpiar el campo
+                return false;
+            }
+            
+            // Verificar que esté dentro del rango permitido
+            const minDate = this.getNextSaturday();
+            const maxDate = this.getLastSaturdayOfYear();
+            
+            if (selectedDate < minDate || selectedDate > maxDate) {
+                this.showFieldError(dateInput, `La fecha debe estar entre ${minDate} y ${maxDate}`);
+                dateInput.val(''); // Limpiar el campo
                 return false;
             }
             

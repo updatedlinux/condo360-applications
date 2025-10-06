@@ -504,6 +504,7 @@
     justify-content: center;
     z-index: 10000;
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .modal-content {
@@ -514,6 +515,8 @@
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: var(--condo360-shadow-lg);
+    margin: auto;
+    position: relative;
 }
 
 .modal-header {

@@ -221,108 +221,125 @@ class RequestValidator {
    * @returns {Object} - Resultado de la validación
    */
   static validateCreate(data) {
-    const baseSchema = Joi.object({
-      wp_user_id: Joi.number().integer().positive().required()
-        .messages({
-          'number.base': 'El ID del usuario debe ser un número',
-          'number.integer': 'El ID del usuario debe ser un número entero',
-          'number.positive': 'El ID del usuario debe ser positivo',
-          'any.required': 'El ID del usuario es requerido'
-        }),
-      request_type: Joi.string().valid('Mudanza - Entrada', 'Mudanza - Salida', 'Sugerencias', 'Reclamos').required()
-        .messages({
-          'any.only': 'El tipo de solicitud debe ser uno de: Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos',
-          'any.required': 'El tipo de solicitud es requerido'
-        }),
-      details: Joi.string().min(10).max(2000).required()
-        .messages({
-          'string.min': 'Los detalles deben tener al menos 10 caracteres',
-          'string.max': 'Los detalles no pueden exceder 2000 caracteres',
-          'any.required': 'Los detalles son requeridos'
-        })
-    });
+    // Determinar qué esquema usar basado en el tipo de solicitud
+    let schema;
+    
+    if (data.request_type && data.request_type.includes('Mudanza')) {
+      // Para mudanzas, usar el esquema completo que incluye campos de mudanza
+      schema = Joi.object({
+        wp_user_id: Joi.number().integer().positive().required()
+          .messages({
+            'number.base': 'El ID del usuario debe ser un número',
+            'number.integer': 'El ID del usuario debe ser un número entero',
+            'number.positive': 'El ID del usuario debe ser positivo',
+            'any.required': 'El ID del usuario es requerido'
+          }),
+        request_type: Joi.string().valid('Mudanza - Entrada', 'Mudanza - Salida', 'Sugerencias', 'Reclamos').required()
+          .messages({
+            'any.only': 'El tipo de solicitud debe ser uno de: Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos',
+            'any.required': 'El tipo de solicitud es requerido'
+          }),
+        details: Joi.string().min(10).max(2000).required()
+          .messages({
+            'string.min': 'Los detalles deben tener al menos 10 caracteres',
+            'string.max': 'Los detalles no pueden exceder 2000 caracteres',
+            'any.required': 'Los detalles son requeridos'
+          }),
+        move_date: Joi.date().iso().required()
+          .custom((value, helpers) => {
+            const date = moment(value).tz('America/Caracas');
+            if (date.day() !== 6) { // 6 = sábado
+              return helpers.error('custom.saturday');
+            }
+            if (date.isBefore(moment().tz('America/Caracas'), 'day')) {
+              return helpers.error('custom.future');
+            }
+            return value;
+          })
+          .messages({
+            'date.base': 'La fecha debe ser válida',
+            'date.format': 'La fecha debe estar en formato ISO',
+            'custom.saturday': 'Las mudanzas solo pueden ser programadas para sábados',
+            'custom.future': 'La fecha de mudanza debe ser futura',
+            'any.required': 'La fecha de mudanza es requerida para solicitudes de mudanza'
+          }),
+        transporter_name: Joi.string().min(2).max(255).required()
+          .messages({
+            'string.min': 'El nombre del transportista debe tener al menos 2 caracteres',
+            'string.max': 'El nombre del transportista no puede exceder 255 caracteres',
+            'any.required': 'El nombre del transportista es requerido'
+          }),
+        transporter_id_card: Joi.string().min(5).max(50).required()
+          .messages({
+            'string.min': 'La cédula del transportista debe tener al menos 5 caracteres',
+            'string.max': 'La cédula del transportista no puede exceder 50 caracteres',
+            'any.required': 'La cédula del transportista es requerida'
+          }),
+        vehicle_brand: Joi.string().min(2).max(100).required()
+          .messages({
+            'string.min': 'La marca del vehículo debe tener al menos 2 caracteres',
+            'string.max': 'La marca del vehículo no puede exceder 100 caracteres',
+            'any.required': 'La marca del vehículo es requerida'
+          }),
+        vehicle_model: Joi.string().min(2).max(100).required()
+          .messages({
+            'string.min': 'El modelo del vehículo debe tener al menos 2 caracteres',
+            'string.max': 'El modelo del vehículo no puede exceder 100 caracteres',
+            'any.required': 'El modelo del vehículo es requerido'
+          }),
+        vehicle_plate: Joi.string().min(3).max(20).required()
+          .messages({
+            'string.min': 'La placa del vehículo debe tener al menos 3 caracteres',
+            'string.max': 'La placa del vehículo no puede exceder 20 caracteres',
+            'any.required': 'La placa del vehículo es requerida'
+          }),
+        vehicle_color: Joi.string().min(2).max(50).required()
+          .messages({
+            'string.min': 'El color del vehículo debe tener al menos 2 caracteres',
+            'string.max': 'El color del vehículo no puede exceder 50 caracteres',
+            'any.required': 'El color del vehículo es requerido'
+          }),
+        driver_name: Joi.string().min(2).max(255).required()
+          .messages({
+            'string.min': 'El nombre del chofer debe tener al menos 2 caracteres',
+            'string.max': 'El nombre del chofer no puede exceder 255 caracteres',
+            'any.required': 'El nombre del chofer es requerido'
+          }),
+        driver_id_card: Joi.string().min(5).max(50).required()
+          .messages({
+            'string.min': 'La cédula del chofer debe tener al menos 5 caracteres',
+            'string.max': 'La cédula del chofer no puede exceder 50 caracteres',
+            'any.required': 'La cédula del chofer es requerida'
+          })
+      });
+    } else {
+      // Para otros tipos de solicitud, usar esquema básico
+      schema = Joi.object({
+        wp_user_id: Joi.number().integer().positive().required()
+          .messages({
+            'number.base': 'El ID del usuario debe ser un número',
+            'number.integer': 'El ID del usuario debe ser un número entero',
+            'number.positive': 'El ID del usuario debe ser positivo',
+            'any.required': 'El ID del usuario es requerido'
+          }),
+        request_type: Joi.string().valid('Mudanza - Entrada', 'Mudanza - Salida', 'Sugerencias', 'Reclamos').required()
+          .messages({
+            'any.only': 'El tipo de solicitud debe ser uno de: Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos',
+            'any.required': 'El tipo de solicitud es requerido'
+          }),
+        details: Joi.string().min(10).max(2000).required()
+          .messages({
+            'string.min': 'Los detalles deben tener al menos 10 caracteres',
+            'string.max': 'Los detalles no pueden exceder 2000 caracteres',
+            'any.required': 'Los detalles son requeridos'
+          })
+      });
+    }
 
-    const mudanzaSchema = Joi.object({
-      move_date: Joi.date().iso().required()
-        .custom((value, helpers) => {
-          const date = moment(value).tz('America/Caracas');
-          if (date.day() !== 6) { // 6 = sábado
-            return helpers.error('custom.saturday');
-          }
-          if (date.isBefore(moment().tz('America/Caracas'), 'day')) {
-            return helpers.error('custom.future');
-          }
-          return value;
-        })
-        .messages({
-          'date.base': 'La fecha debe ser válida',
-          'date.format': 'La fecha debe estar en formato ISO',
-          'custom.saturday': 'Las mudanzas solo pueden ser programadas para sábados',
-          'custom.future': 'La fecha de mudanza debe ser futura',
-          'any.required': 'La fecha de mudanza es requerida para solicitudes de mudanza'
-        }),
-      transporter_name: Joi.string().min(2).max(255).required()
-        .messages({
-          'string.min': 'El nombre del transportista debe tener al menos 2 caracteres',
-          'string.max': 'El nombre del transportista no puede exceder 255 caracteres',
-          'any.required': 'El nombre del transportista es requerido'
-        }),
-      transporter_id_card: Joi.string().min(5).max(50).required()
-        .messages({
-          'string.min': 'La cédula del transportista debe tener al menos 5 caracteres',
-          'string.max': 'La cédula del transportista no puede exceder 50 caracteres',
-          'any.required': 'La cédula del transportista es requerida'
-        }),
-      vehicle_brand: Joi.string().min(2).max(100).required()
-        .messages({
-          'string.min': 'La marca del vehículo debe tener al menos 2 caracteres',
-          'string.max': 'La marca del vehículo no puede exceder 100 caracteres',
-          'any.required': 'La marca del vehículo es requerida'
-        }),
-      vehicle_model: Joi.string().min(2).max(100).required()
-        .messages({
-          'string.min': 'El modelo del vehículo debe tener al menos 2 caracteres',
-          'string.max': 'El modelo del vehículo no puede exceder 100 caracteres',
-          'any.required': 'El modelo del vehículo es requerido'
-        }),
-      vehicle_plate: Joi.string().min(3).max(20).required()
-        .messages({
-          'string.min': 'La placa del vehículo debe tener al menos 3 caracteres',
-          'string.max': 'La placa del vehículo no puede exceder 20 caracteres',
-          'any.required': 'La placa del vehículo es requerida'
-        }),
-      vehicle_color: Joi.string().min(2).max(50).required()
-        .messages({
-          'string.min': 'El color del vehículo debe tener al menos 2 caracteres',
-          'string.max': 'El color del vehículo no puede exceder 50 caracteres',
-          'any.required': 'El color del vehículo es requerido'
-        }),
-      driver_name: Joi.string().min(2).max(255).required()
-        .messages({
-          'string.min': 'El nombre del chofer debe tener al menos 2 caracteres',
-          'string.max': 'El nombre del chofer no puede exceder 255 caracteres',
-          'any.required': 'El nombre del chofer es requerido'
-        }),
-      driver_id_card: Joi.string().min(5).max(50).required()
-        .messages({
-          'string.min': 'La cédula del chofer debe tener al menos 5 caracteres',
-          'string.max': 'La cédula del chofer no puede exceder 50 caracteres',
-          'any.required': 'La cédula del chofer es requerida'
-        })
-    });
-
-    const { error, value } = baseSchema.validate(data, { abortEarly: false });
+    const { error, value } = schema.validate(data, { abortEarly: false });
     
     if (error) {
       return { error: error.details.map(detail => detail.message) };
-    }
-
-    // Si es una solicitud de mudanza, validar campos adicionales
-    if (data.request_type.includes('Mudanza')) {
-      const mudanzaValidation = mudanzaSchema.validate(data, { abortEarly: false });
-      if (mudanzaValidation.error) {
-        return { error: mudanzaValidation.error.details.map(detail => detail.message) };
-      }
     }
 
     return { value };
