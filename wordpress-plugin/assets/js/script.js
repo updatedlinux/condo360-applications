@@ -148,17 +148,17 @@
         // Obtener el próximo sábado
         getNextSaturday: function() {
             const today = new Date();
-            const venezuelanTime = new Date(today.getTime() - (4 * 60 * 60 * 1000));
             
             // Encontrar el próximo sábado
-            let nextSaturday = new Date(venezuelanTime);
-            const daysUntilSaturday = (6 - venezuelanTime.getDay()) % 7;
+            let nextSaturday = new Date(today);
+            const daysUntilSaturday = (6 - today.getDay()) % 7;
             
-            if (daysUntilSaturday === 0 && venezuelanTime.getHours() >= 18) {
-                // Si es sábado después de las 6 PM, usar el siguiente sábado
-                nextSaturday.setDate(venezuelanTime.getDate() + 7);
+            if (daysUntilSaturday === 0) {
+                // Si es sábado, usar el siguiente sábado
+                nextSaturday.setDate(today.getDate() + 7);
             } else {
-                nextSaturday.setDate(venezuelanTime.getDate() + daysUntilSaturday);
+                // Calcular días hasta el próximo sábado
+                nextSaturday.setDate(today.getDate() + daysUntilSaturday);
             }
             
             return nextSaturday.toISOString().split('T')[0];
