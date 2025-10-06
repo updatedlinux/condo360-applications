@@ -24,7 +24,18 @@ if (!ini_get('date.timezone')) {
 define('CONDO360_SOLICITUDES_VERSION', '1.0.0');
 define('CONDO360_SOLICITUDES_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CONDO360_SOLICITUDES_PLUGIN_PATH', plugin_dir_path(__FILE__));
-define('CONDO360_SOLICITUDES_API_URL', 'http://localhost:7000/api');
+
+// Cargar configuración personalizada si existe
+if (file_exists(CONDO360_SOLICITUDES_PLUGIN_PATH . 'config.php')) {
+    require_once CONDO360_SOLICITUDES_PLUGIN_PATH . 'config.php';
+}
+
+// Definir URL de API por defecto o usar configuración personalizada
+if (defined('CONDO360_SOLICITUDES_CONFIG') && isset(CONDO360_SOLICITUDES_CONFIG['api_url'])) {
+    define('CONDO360_SOLICITUDES_API_URL', CONDO360_SOLICITUDES_CONFIG['api_url']);
+} else {
+    define('CONDO360_SOLICITUDES_API_URL', 'https://applications.bonaventurecclub.com/api');
+}
 
 /**
  * Clase principal del plugin
@@ -565,9 +576,23 @@ class Condo360Solicitudes {
      */
     private function check_configuration() {
         // Verificar que la API esté disponible
-        $response = $this->make_api_request('GET', '/health');
+        $api_url = CONDO360_SOLICITUDES_API_URL;
+        $health_url = str_replace('/api', '', $api_url) . '/health';
         
-        if (!$response || !isset($response['status']) || $response['status'] !== 'OK') {
+        $response = wp_remote_get($health_url, array(
+            'timeout' => 10,
+            'sslverify' => true
+        ));
+        
+        if (is_wp_error($response)) {
+            add_action('admin_notices', array($this, 'api_notice'));
+            return;
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+        
+        if (!$data || !isset($data['status']) || $data['status'] !== 'OK') {
             add_action('admin_notices', array($this, 'api_notice'));
         }
     }
@@ -576,9 +601,21 @@ class Condo360Solicitudes {
      * Mostrar aviso si la API no está disponible
      */
     public function api_notice() {
+        $api_url = CONDO360_SOLICITUDES_API_URL;
+        $health_url = str_replace('/api', '', $api_url) . '/health';
+        
         ?>
         <div class="notice notice-error">
-            <p><?php _e('Condominio360 Solicitudes: La API del backend no está disponible. Verifique la configuración.', 'condo360-solicitudes'); ?></p>
+            <p><strong>Condominio360 Solicitudes:</strong> La API del backend no está disponible.</p>
+            <p><strong>URL configurada:</strong> <?php echo esc_html($api_url); ?></p>
+            <p><strong>Health check:</strong> <a href="<?php echo esc_url($health_url); ?>" target="_blank"><?php echo esc_html($health_url); ?></a></p>
+            <p><strong>Posibles soluciones:</strong></p>
+            <ul>
+                <li>Verificar que el servidor backend esté ejecutándose</li>
+                <li>Comprobar la configuración en <code>config.php</code></li>
+                <li>Verificar conectividad de red y SSL</li>
+                <li>Revisar logs del servidor</li>
+            </ul>
         </div>
         <?php
     }

@@ -33,6 +33,10 @@ const swaggerOptions = {
     },
     servers: [
       {
+        url: 'https://applications.bonaventurecclub.com',
+        description: 'Servidor de producción',
+      },
+      {
         url: `http://localhost:${PORT}`,
         description: 'Servidor de desarrollo',
       },
