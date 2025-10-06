@@ -40,15 +40,27 @@ class EmailService {
    */
   formatDateForEmail(date) {
     try {
+      console.log('🔍 DEBUG formatDateForEmail:');
+      console.log('  - Input date:', date);
+      console.log('  - Type:', typeof date);
+      
       // Si la fecha viene con información de zona horaria, interpretarla como UTC
       if (typeof date === 'string' && date.includes('T')) {
+        console.log('  - Processing as UTC string');
         // Crear fecha interpretando como UTC
         const utcDate = moment.utc(date);
+        console.log('  - UTC moment:', utcDate.format());
         // Convertir a zona horaria venezolana
-        return utcDate.tz('America/Caracas').format('DD/MM/YYYY [a las] h:mm A');
+        const venezuelanDate = utcDate.tz('America/Caracas');
+        console.log('  - Venezuelan moment:', venezuelanDate.format());
+        const formatted = venezuelanDate.format('DD/MM/YYYY [a las] h:mm A');
+        console.log('  - Final formatted:', formatted);
+        return formatted;
       } else {
-        // Para fechas sin información de zona horaria, usar la función del middleware
-        return formatDateReadable(date);
+        console.log('  - Processing with middleware function');
+        const formatted = formatDateReadable(date);
+        console.log('  - Middleware result:', formatted);
+        return formatted;
       }
     } catch (error) {
       console.error('Error formateando fecha para correo:', error);
