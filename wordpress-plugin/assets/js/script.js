@@ -1,0 +1,640 @@
+/**
+ * JavaScript para el plugin Condominio360 Solicitudes
+ */
+
+(function($) {
+    'use strict';
+
+    // Objeto principal del plugin
+    const Condo360Solicitudes = {
+        
+        // Configuración
+        config: {
+            apiUrl: condo360_ajax.api_url,
+            ajaxUrl: condo360_ajax.ajax_url,
+            nonce: condo360_ajax.nonce,
+            messages: condo360_ajax.messages
+        },
+        
+        // Estado actual
+        state: {
+            currentPage: 1,
+            currentFilters: {},
+            isLoading: false
+        },
+        
+        // Inicialización
+        init: function() {
+            this.bindEvents();
+            this.initFormValidation();
+            this.loadUserRequests();
+            this.loadAdminData();
+        },
+        
+        // Vincular eventos
+        bindEvents: function() {
+            // Formulario de solicitudes
+            $('#condo360-request-form').on('submit', this.handleFormSubmit.bind(this));
+            $('#request_type').on('change', this.handleRequestTypeChange.bind(this));
+            
+            // Panel de administración
+            $('#filter-status, #filter-type').on('change', this.handleFilterChange.bind(this));
+            $(document).on('click', '.view-request', this.handleViewRequest.bind(this));
+            $(document).on('click', '.respond-request', this.handleRespondRequest.bind(this));
+            $('#response-form').on('submit', this.handleResponseSubmit.bind(this));
+            
+            // Modales
+            $(document).on('click', '.modal-close', this.closeModal.bind(this));
+            $(document).on('click', '.condo360-modal', function(e) {
+                if (e.target === this) {
+                    Condo360Solicitudes.closeModal();
+                }
+            });
+            
+            // Paginación
+            $(document).on('click', '.pagination-btn', this.handlePagination.bind(this));
+            
+            // Validación de fecha de mudanza
+            $('#move_date').on('change', this.validateMoveDate.bind(this));
+        },
+        
+        // Manejar envío del formulario
+        handleFormSubmit: function(e) {
+            e.preventDefault();
+            
+            if (this.state.isLoading) return;
+            
+            const form = $(e.target);
+            const formData = this.serializeForm(form);
+            
+            // Validar formulario
+            if (!this.validateForm(formData)) {
+                return;
+            }
+            
+            this.setLoading(form.find('button[type="submit"]'), true);
+            
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'condo360_create_request',
+                    nonce: this.config.nonce,
+                    ...formData
+                },
+                success: (response) => {
+                    if (response.success) {
+                        this.showMessage('success', 'Solicitud enviada exitosamente');
+                        form[0].reset();
+                        $('#mudanza-fields').hide();
+                        this.loadUserRequests();
+                    } else {
+                        this.showMessage('error', response.data.message || 'Error al enviar la solicitud');
+                    }
+                },
+                error: () => {
+                    this.showMessage('error', 'Error de conexión');
+                },
+                complete: () => {
+                    this.setLoading(form.find('button[type="submit"]'), false);
+                }
+            });
+        },
+        
+        // Manejar cambio de tipo de solicitud
+        handleRequestTypeChange: function(e) {
+            const requestType = $(e.target).val();
+            const mudanzaFields = $('#mudanza-fields');
+            
+            if (requestType.includes('Mudanza')) {
+                mudanzaFields.show();
+                mudanzaFields.find('input, select').prop('required', true);
+            } else {
+                mudanzaFields.hide();
+                mudanzaFields.find('input, select').prop('required', false);
+            }
+        },
+        
+        // Validar fecha de mudanza (solo sábados)
+        validateMoveDate: function(e) {
+            const dateInput = $(e.target);
+            const selectedDate = new Date(dateInput.val());
+            const dayOfWeek = selectedDate.getDay(); // 0 = domingo, 6 = sábado
+            
+            if (dayOfWeek !== 6) {
+                this.showFieldError(dateInput, 'Las mudanzas solo pueden ser programadas para sábados');
+                return false;
+            }
+            
+            // Verificar que la fecha sea futura
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (selectedDate < today) {
+                this.showFieldError(dateInput, 'La fecha de mudanza debe ser futura');
+                return false;
+            }
+            
+            this.clearFieldError(dateInput);
+            return true;
+        },
+        
+        // Validar formulario completo
+        validateForm: function(formData) {
+            let isValid = true;
+            
+            // Validar campos requeridos
+            const requiredFields = ['request_type', 'details'];
+            
+            if (formData.request_type.includes('Mudanza')) {
+                requiredFields.push(
+                    'move_date', 'transporter_name', 'transporter_id_card',
+                    'vehicle_brand', 'vehicle_model', 'vehicle_plate',
+                    'vehicle_color', 'driver_name', 'driver_id_card'
+                );
+            }
+            
+            requiredFields.forEach(field => {
+                const input = $(`[name="${field}"]`);
+                if (!formData[field] || formData[field].trim() === '') {
+                    this.showFieldError(input, 'Este campo es requerido');
+                    isValid = false;
+                } else {
+                    this.clearFieldError(input);
+                }
+            });
+            
+            // Validar longitud de detalles
+            if (formData.details && formData.details.length < 10) {
+                this.showFieldError($('#details'), 'Los detalles deben tener al menos 10 caracteres');
+                isValid = false;
+            }
+            
+            return isValid;
+        },
+        
+        // Cargar solicitudes del usuario
+        loadUserRequests: function() {
+            const container = $('#condo360-requests-list');
+            container.html('<div class="loading">' + this.config.messages.loading + '</div>');
+            
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'condo360_get_requests',
+                    nonce: this.config.nonce,
+                    user_id: condo360_ajax.current_user_id || null
+                },
+                success: (response) => {
+                    if (response.success) {
+                        this.renderUserRequests(response.data.data);
+                    } else {
+                        container.html('<div class="message error">No se pudieron cargar las solicitudes</div>');
+                    }
+                },
+                error: () => {
+                    container.html('<div class="message error">Error de conexión</div>');
+                }
+            });
+        },
+        
+        // Renderizar solicitudes del usuario
+        renderUserRequests: function(requests) {
+            const container = $('#condo360-requests-list');
+            
+            if (requests.length === 0) {
+                container.html('<div class="message info">No tiene solicitudes registradas</div>');
+                return;
+            }
+            
+            let html = '';
+            requests.forEach(request => {
+                html += this.renderRequestItem(request);
+            });
+            
+            container.html(html);
+        },
+        
+        // Renderizar item de solicitud
+        renderRequestItem: function(request) {
+            const statusClass = request.status.toLowerCase();
+            const formattedDate = new Date(request.created_at).toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            return `
+                <div class="request-item ${statusClass}">
+                    <div class="request-header">
+                        <span class="request-id">#${request.id}</span>
+                        <span class="request-status ${statusClass}">${request.status}</span>
+                    </div>
+                    <div class="request-details">
+                        <strong>Tipo:</strong> ${request.request_type}<br>
+                        <strong>Detalles:</strong> ${request.details.substring(0, 100)}${request.details.length > 100 ? '...' : ''}
+                        ${request.response ? `<br><strong>Respuesta:</strong> ${request.response}` : ''}
+                    </div>
+                    <div class="request-date">${formattedDate}</div>
+                </div>
+            `;
+        },
+        
+        // Cargar datos del panel de administración
+        loadAdminData: function() {
+            this.loadAdminStats();
+            this.loadAdminRequests();
+        },
+        
+        // Cargar estadísticas del admin
+        loadAdminStats: function() {
+            const container = $('#admin-stats');
+            
+            $.ajax({
+                url: this.config.apiUrl + '/requests/stats',
+                type: 'GET',
+                success: (response) => {
+                    if (response.success) {
+                        this.renderAdminStats(response.data);
+                    }
+                },
+                error: () => {
+                    container.html('<div class="message error">Error al cargar estadísticas</div>');
+                }
+            });
+        },
+        
+        // Renderizar estadísticas del admin
+        renderAdminStats: function(stats) {
+            const container = $('#admin-stats');
+            
+            const html = `
+                <div class="stat-card">
+                    <h4>Total</h4>
+                    <p class="stat-number">${stats.total}</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Pendientes</h4>
+                    <p class="stat-number">${stats.byStatus.Recibida || 0}</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Aprobadas</h4>
+                    <p class="stat-number">${stats.byStatus.Aprobado || 0}</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Rechazadas</h4>
+                    <p class="stat-number">${stats.byStatus.Rechazado || 0}</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Atendidas</h4>
+                    <p class="stat-number">${stats.byStatus.Atendido || 0}</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Este Mes</h4>
+                    <p class="stat-number">${stats.thisMonth}</p>
+                </div>
+            `;
+            
+            container.html(html);
+        },
+        
+        // Cargar solicitudes del admin
+        loadAdminRequests: function() {
+            const container = $('#admin-requests-list');
+            container.html('<tr><td colspan="6" class="loading">' + this.config.messages.loading + '</td></tr>');
+            
+            const params = {
+                page: this.state.currentPage,
+                limit: 20,
+                ...this.state.currentFilters
+            };
+            
+            $.ajax({
+                url: this.config.apiUrl + '/requests',
+                type: 'GET',
+                data: params,
+                success: (response) => {
+                    if (response.success) {
+                        this.renderAdminRequests(response.data.data);
+                        this.renderPagination(response.data.pagination);
+                    } else {
+                        container.html('<tr><td colspan="6" class="message error">Error al cargar solicitudes</td></tr>');
+                    }
+                },
+                error: () => {
+                    container.html('<tr><td colspan="6" class="message error">Error de conexión</td></tr>');
+                }
+            });
+        },
+        
+        // Renderizar solicitudes del admin
+        renderAdminRequests: function(requests) {
+            const container = $('#admin-requests-list');
+            
+            if (requests.length === 0) {
+                container.html('<tr><td colspan="6" class="message info">No hay solicitudes</td></tr>');
+                return;
+            }
+            
+            let html = '';
+            requests.forEach(request => {
+                const formattedDate = new Date(request.created_at).toLocaleDateString('es-ES');
+                const statusClass = request.status.toLowerCase();
+                
+                html += `
+                    <tr>
+                        <td>#${request.id}</td>
+                        <td>${request.display_name}</td>
+                        <td>${request.request_type}</td>
+                        <td>${formattedDate}</td>
+                        <td><span class="request-status ${statusClass}">${request.status}</span></td>
+                        <td>
+                            <button class="btn btn-secondary view-request" data-id="${request.id}">Ver</button>
+                            ${request.status === 'Recibida' ? `<button class="btn btn-primary respond-request" data-id="${request.id}">Responder</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            container.html(html);
+        },
+        
+        // Renderizar paginación
+        renderPagination: function(pagination) {
+            const container = $('#admin-pagination');
+            
+            if (pagination.totalPages <= 1) {
+                container.empty();
+                return;
+            }
+            
+            let html = '';
+            
+            // Botón anterior
+            if (pagination.page > 1) {
+                html += `<button class="pagination-btn" data-page="${pagination.page - 1}">Anterior</button>`;
+            }
+            
+            // Páginas
+            const startPage = Math.max(1, pagination.page - 2);
+            const endPage = Math.min(pagination.totalPages, pagination.page + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = i === pagination.page ? 'active' : '';
+                html += `<button class="pagination-btn ${activeClass}" data-page="${i}">${i}</button>`;
+            }
+            
+            // Botón siguiente
+            if (pagination.page < pagination.totalPages) {
+                html += `<button class="pagination-btn" data-page="${pagination.page + 1}">Siguiente</button>`;
+            }
+            
+            container.html(html);
+        },
+        
+        // Manejar cambio de filtros
+        handleFilterChange: function() {
+            this.state.currentFilters = {
+                status: $('#filter-status').val(),
+                type: $('#filter-type').val()
+            };
+            this.state.currentPage = 1;
+            this.loadAdminRequests();
+        },
+        
+        // Manejar paginación
+        handlePagination: function(e) {
+            const page = parseInt($(e.target).data('page'));
+            if (page && page !== this.state.currentPage) {
+                this.state.currentPage = page;
+                this.loadAdminRequests();
+            }
+        },
+        
+        // Manejar ver solicitud
+        handleViewRequest: function(e) {
+            const requestId = $(e.target).data('id');
+            
+            $.ajax({
+                url: this.config.apiUrl + '/requests/' + requestId,
+                type: 'GET',
+                success: (response) => {
+                    if (response.success) {
+                        this.showRequestModal(response.data);
+                    }
+                }
+            });
+        },
+        
+        // Mostrar modal de solicitud
+        showRequestModal: function(request) {
+            const modal = $('#request-modal');
+            const body = $('#modal-body');
+            
+            const formattedDate = new Date(request.created_at).toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            let mudanzaInfo = '';
+            if (request.request_type.includes('Mudanza')) {
+                mudanzaInfo = `
+                    <div class="mudanza-info">
+                        <h4>Información de la Mudanza</h4>
+                        <p><strong>Fecha:</strong> ${new Date(request.move_date).toLocaleDateString('es-ES')}</p>
+                        <p><strong>Transportista:</strong> ${request.transporter_name} (C.I. ${request.transporter_id_card})</p>
+                        <p><strong>Vehículo:</strong> ${request.vehicle_brand} ${request.vehicle_model} - ${request.vehicle_color}</p>
+                        <p><strong>Placa:</strong> ${request.vehicle_plate}</p>
+                        <p><strong>Chofer:</strong> ${request.driver_name} (C.I. ${request.driver_id_card})</p>
+                    </div>
+                `;
+            }
+            
+            const html = `
+                <div class="request-detail">
+                    <div class="detail-header">
+                        <h4>Solicitud #${request.id}</h4>
+                        <span class="request-status ${request.status.toLowerCase()}">${request.status}</span>
+                    </div>
+                    <div class="detail-info">
+                        <p><strong>Solicitante:</strong> ${request.display_name}</p>
+                        <p><strong>Tipo:</strong> ${request.request_type}</p>
+                        <p><strong>Fecha:</strong> ${formattedDate}</p>
+                        <p><strong>Detalles:</strong></p>
+                        <div class="details-text">${request.details}</div>
+                        ${mudanzaInfo}
+                        ${request.response ? `
+                            <div class="response-section">
+                                <h4>Respuesta de la Administración</h4>
+                                <div class="response-text">${request.response}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            body.html(html);
+            modal.show();
+        },
+        
+        // Manejar responder solicitud
+        handleRespondRequest: function(e) {
+            const requestId = $(e.target).data('id');
+            
+            $.ajax({
+                url: this.config.apiUrl + '/requests/' + requestId,
+                type: 'GET',
+                success: (response) => {
+                    if (response.success) {
+                        this.showResponseModal(response.data);
+                    }
+                }
+            });
+        },
+        
+        // Mostrar modal de respuesta
+        showResponseModal: function(request) {
+            const modal = $('#response-modal');
+            const statusSelect = $('#response-status');
+            
+            // Limpiar opciones anteriores
+            statusSelect.empty();
+            
+            // Agregar opciones según el tipo de solicitud
+            if (request.request_type.includes('Mudanza')) {
+                statusSelect.append('<option value="Aprobado">Aprobado</option>');
+                statusSelect.append('<option value="Rechazado">Rechazado</option>');
+            } else {
+                statusSelect.append('<option value="Atendido">Atendido</option>');
+            }
+            
+            $('#response-request-id').val(request.id);
+            $('#response-text').val('');
+            
+            modal.show();
+        },
+        
+        // Manejar envío de respuesta
+        handleResponseSubmit: function(e) {
+            e.preventDefault();
+            
+            if (this.state.isLoading) return;
+            
+            const form = $(e.target);
+            const formData = {
+                request_id: $('#response-request-id').val(),
+                status: $('#response-status').val(),
+                response: $('#response-text').val()
+            };
+            
+            this.setLoading(form.find('button[type="submit"]'), true);
+            
+            $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'condo360_update_request',
+                    nonce: this.config.nonce,
+                    ...formData
+                },
+                success: (response) => {
+                    if (response.success) {
+                        this.showMessage('success', 'Respuesta enviada exitosamente');
+                        this.closeModal();
+                        this.loadAdminRequests();
+                        this.loadAdminStats();
+                    } else {
+                        this.showMessage('error', response.data.message || 'Error al enviar la respuesta');
+                    }
+                },
+                error: () => {
+                    this.showMessage('error', 'Error de conexión');
+                },
+                complete: () => {
+                    this.setLoading(form.find('button[type="submit"]'), false);
+                }
+            });
+        },
+        
+        // Cerrar modal
+        closeModal: function() {
+            $('.condo360-modal').hide();
+        },
+        
+        // Serializar formulario
+        serializeForm: function(form) {
+            const formData = {};
+            form.find('input, select, textarea').each(function() {
+                const field = $(this);
+                if (field.attr('name')) {
+                    formData[field.attr('name')] = field.val();
+                }
+            });
+            return formData;
+        },
+        
+        // Mostrar mensaje
+        showMessage: function(type, message) {
+            const container = $('#condo360-messages');
+            const messageHtml = `<div class="message ${type}">${message}</div>`;
+            container.html(messageHtml);
+            
+            // Auto-ocultar después de 5 segundos
+            setTimeout(() => {
+                container.empty();
+            }, 5000);
+        },
+        
+        // Mostrar error en campo
+        showFieldError: function(field, message) {
+            field.addClass('error');
+            field.closest('.form-group').find('.error-message').remove();
+            field.closest('.form-group').append(`<div class="error-message">${message}</div>`);
+        },
+        
+        // Limpiar error de campo
+        clearFieldError: function(field) {
+            field.removeClass('error');
+            field.closest('.form-group').find('.error-message').remove();
+        },
+        
+        // Establecer estado de carga
+        setLoading: function(button, loading) {
+            if (loading) {
+                button.addClass('loading').prop('disabled', true);
+                this.state.isLoading = true;
+            } else {
+                button.removeClass('loading').prop('disabled', false);
+                this.state.isLoading = false;
+            }
+        },
+        
+        // Inicializar validación de formulario
+        initFormValidation: function() {
+            // Validación en tiempo real
+            $('input, textarea').on('blur', function() {
+                const field = $(this);
+                if (field.prop('required') && !field.val().trim()) {
+                    Condo360Solicitudes.showFieldError(field, 'Este campo es requerido');
+                } else {
+                    Condo360Solicitudes.clearFieldError(field);
+                }
+            });
+        }
+    };
+    
+    // Inicializar cuando el documento esté listo
+    $(document).ready(function() {
+        Condo360Solicitudes.init();
+    });
+    
+    // Exponer objeto globalmente para debugging
+    window.Condo360Solicitudes = Condo360Solicitudes;
+    
+})(jQuery);
