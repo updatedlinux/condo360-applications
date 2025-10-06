@@ -363,7 +363,11 @@ class RequestController {
       const updateData = validation.value;
 
       // Validar que el estado es válido para el tipo de solicitud
-      if (!RequestValidator.validateStatusForType(existingRequest.request_type, updateData.status)) {
+      console.log(`DEBUG updateRequest: request_type="${existingRequest.request_type}", status="${updateData.status}"`);
+      const isValidStatus = RequestValidator.validateStatusForType(existingRequest.request_type, updateData.status);
+      console.log(`DEBUG validateStatusForType result: ${isValidStatus}`);
+      
+      if (!isValidStatus) {
         return res.status(400).json({
           success: false,
           error: 'Estado inválido para este tipo de solicitud',
