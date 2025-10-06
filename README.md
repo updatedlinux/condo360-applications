@@ -41,6 +41,7 @@ Sistema completo para gestión de solicitudes de residentes en condominios, desa
 - ✅ **Notificaciones por correo**: Acuse de recibo y respuestas
 - ✅ **Panel de administración**: Gestión completa para junta/administradores
 - ✅ **Historial de solicitudes**: Seguimiento para residentes
+- ✅ **Zona Horaria Venezuela**: Todas las fechas en GMT-4 (Caracas) con formato AM/PM
 
 ## 🏗️ Arquitectura
 
@@ -206,6 +207,29 @@ SMTP_TLS_REJECT_UNAUTHORIZED=true
 - `SMTP_SECURE=false`: Usar STARTTLS (puerto 587)
 - `SMTP_TLS_REJECT_UNAUTHORIZED=true`: Verificar certificados SSL (recomendado para producción)
 - `SMTP_TLS_REJECT_UNAUTHORIZED=false`: Ignorar errores de certificados (solo para desarrollo)
+
+### Configuración de Zona Horaria Venezuela (GMT-4)
+
+El sistema está configurado para manejar todas las fechas y horas en zona horaria venezolana:
+
+#### Formato de Fechas
+- **Formato completo**: `DD/MM/YYYY a las h:mm AM/PM`
+- **Formato corto**: `DD/MM/YYYY h:mm AM/PM`
+- **Solo fecha**: `DD/MM/YYYY`
+- **Zona horaria**: GMT-4 (America/Caracas)
+
+#### Implementación
+- **Backend**: Middleware automático de formateo de fechas
+- **Frontend**: Funciones JavaScript para conversión GMT-4
+- **Correos**: Plantillas con fechas venezolanas
+- **Validaciones**: Fechas de mudanza solo sábados en GMT-4
+
+#### Ejemplos de Formato
+```
+Fecha de creación: 15/01/2024 a las 02:30 PM
+Fecha de mudanza: 20/01/2024
+Fecha corta: 15/01/2024 02:30 PM
+```
 
 ### Configuración para Desarrollo Interno
 

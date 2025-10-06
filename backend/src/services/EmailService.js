@@ -192,11 +192,11 @@ class EmailService {
    */
   async sendRequestConfirmation(request, user) {
     try {
-      const formattedDate = moment(request.created_at).format('DD/MM/YYYY [a las] h:mm A');
+      const formattedDate = moment(request.created_at).tz('America/Caracas').format('DD/MM/YYYY [a las] h:mm A');
       
       let mudanzaDetails = '';
       if (request.request_type.includes('Mudanza')) {
-        const moveDate = moment(request.move_date).format('DD/MM/YYYY');
+        const moveDate = moment(request.move_date).tz('America/Caracas').format('DD/MM/YYYY');
         mudanzaDetails = `
           <div class="info-box">
             <h3 style="margin-top: 0; color: ${this.primaryColor};">Detalles de la Mudanza</h3>
@@ -283,7 +283,7 @@ class EmailService {
    */
   async sendRequestResponse(request, user) {
     try {
-      const formattedDate = moment(request.updated_at).format('DD/MM/YYYY [a las] h:mm A');
+      const formattedDate = moment(request.updated_at).tz('America/Caracas').format('DD/MM/YYYY [a las] h:mm A');
       
       let statusColor = this.secondaryColor;
       let statusText = request.status;

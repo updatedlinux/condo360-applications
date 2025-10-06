@@ -15,6 +15,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Configurar zona horaria para Venezuela (GMT-4)
+if (!ini_get('date.timezone')) {
+    date_default_timezone_set('America/Caracas');
+}
+
 // Definir constantes del plugin
 define('CONDO360_SOLICITUDES_VERSION', '1.0.0');
 define('CONDO360_SOLICITUDES_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -51,6 +56,75 @@ class Condo360Solicitudes {
         // Registrar shortcodes
         add_shortcode('condo360_solicitudes_form', array($this, 'shortcode_form'));
         add_shortcode('condo360_solicitudes_admin', array($this, 'shortcode_admin'));
+    }
+    
+    /**
+     * Formatear fecha en zona horaria venezolana (GMT-4)
+     * @param string $date_string - Fecha a formatear
+     * @param bool $include_time - Incluir hora
+     * @return string - Fecha formateada
+     */
+    public function format_venezuelan_date($date_string, $include_time = true) {
+        if (empty($date_string)) {
+            return '';
+        }
+        
+        $date = new DateTime($date_string, new DateTimeZone('UTC'));
+        $date->setTimezone(new DateTimeZone('America/Caracas'));
+        
+        if ($include_time) {
+            return $date->format('d/m/Y \a \l\a\s h:i A');
+        } else {
+            return $date->format('d/m/Y');
+        }
+    }
+    
+    /**
+     * Formatear fecha para mostrar en listas (más compacto)
+     * @param string $date_string - Fecha a formatear
+     * @return string - Fecha formateada compacta
+     */
+    public function format_venezuelan_date_short($date_string) {
+        if (empty($date_string)) {
+            return '';
+        }
+        
+        $date = new DateTime($date_string, new DateTimeZone('UTC'));
+        $date->setTimezone(new DateTimeZone('America/Caracas'));
+        
+        return $date->format('d/m/Y h:i A');
+    }
+    
+    /**
+     * Obtener fecha actual en zona horaria venezolana
+     * @return string - Fecha actual formateada
+     */
+    public function get_current_venezuelan_date() {
+        $date = new DateTime('now', new DateTimeZone('America/Caracas'));
+        return $date->format('Y-m-d');
+    }
+    
+    /**
+     * Obtener timestamp actual en zona horaria venezolana
+     * @return string - Timestamp actual
+     */
+    public function get_current_venezuelan_timestamp() {
+        $date = new DateTime('now', new DateTimeZone('America/Caracas'));
+        return $date->format('Y-m-d H:i:s');
+    }
+    
+    /**
+     * Validar que la fecha sea sábado en zona horaria venezolana
+     * @param string $date_string - Fecha a validar
+     * @return bool - True si es sábado
+     */
+    public function is_saturday_venezuela($date_string) {
+        if (empty($date_string)) {
+            return false;
+        }
+        
+        $date = new DateTime($date_string, new DateTimeZone('America/Caracas'));
+        return $date->format('w') == '6'; // 6 = sábado
     }
     
     /**

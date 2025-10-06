@@ -4,11 +4,16 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const moment = require('moment-timezone');
 require('dotenv').config();
+
+// Configurar zona horaria global para Venezuela (GMT-4)
+moment.tz.setDefault('America/Caracas');
 
 const db = require('./config/database');
 const requestRoutes = require('./routes/requests');
 const { errorHandler } = require('./middleware/errorHandler');
+const { formatDatesMiddleware } = require('./middleware/dateFormatter');
 
 const app = express();
 const PORT = process.env.PORT || 7000;
@@ -78,6 +83,9 @@ app.use('/api/', limiter);
 // Middleware para parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Middleware para formatear fechas en zona horaria venezolana
+app.use(formatDatesMiddleware);
 
 // Documentación Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

@@ -1,7 +1,7 @@
 const Joi = require('joi');
 const moment = require('moment-timezone');
 
-// Configurar zona horaria para GMT-4
+// Configurar zona horaria para Venezuela (GMT-4)
 moment.tz.setDefault('America/Caracas');
 
 /**
@@ -209,11 +209,11 @@ class RequestValidator {
     const mudanzaSchema = Joi.object({
       move_date: Joi.date().iso().required()
         .custom((value, helpers) => {
-          const date = moment(value);
+          const date = moment(value).tz('America/Caracas');
           if (date.day() !== 6) { // 6 = sábado
             return helpers.error('custom.saturday');
           }
-          if (date.isBefore(moment(), 'day')) {
+          if (date.isBefore(moment().tz('America/Caracas'), 'day')) {
             return helpers.error('custom.future');
           }
           return value;

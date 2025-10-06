@@ -115,20 +115,18 @@
             }
         },
         
-        // Validar fecha de mudanza (solo sábados)
+        // Validar fecha de mudanza (solo sábados en zona horaria venezolana)
         validateMoveDate: function(e) {
             const dateInput = $(e.target);
-            const selectedDate = new Date(dateInput.val());
-            const dayOfWeek = selectedDate.getDay(); // 0 = domingo, 6 = sábado
+            const selectedDate = dateInput.val();
             
-            if (dayOfWeek !== 6) {
-                this.showFieldError(dateInput, 'Las mudanzas solo pueden ser programadas para sábados');
+            if (!this.isValidSaturdayVenezuela(selectedDate)) {
+                this.showFieldError(dateInput, 'Las mudanzas solo pueden ser programadas para sábados (zona horaria Venezuela GMT-4)');
                 return false;
             }
             
-            // Verificar que la fecha sea futura
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            // Verificar que la fecha sea futura en zona horaria venezolana
+            const today = this.getCurrentVenezuelanDate();
             
             if (selectedDate < today) {
                 this.showFieldError(dateInput, 'La fecha de mudanza debe ser futura');
@@ -219,13 +217,7 @@
         // Renderizar item de solicitud
         renderRequestItem: function(request) {
             const statusClass = request.status.toLowerCase();
-            const formattedDate = new Date(request.created_at).toLocaleDateString('es-ES', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            const formattedDate = this.formatVenezuelanDate(request.created_at);
             
             return `
                 <div class="request-item ${statusClass}">
@@ -341,7 +333,7 @@
             
             let html = '';
             requests.forEach(request => {
-                const formattedDate = new Date(request.created_at).toLocaleDateString('es-ES');
+                const formattedDate = this.formatVenezuelanDateShort(request.created_at);
                 const statusClass = request.status.toLowerCase();
                 
                 html += `
@@ -434,20 +426,14 @@
             const modal = $('#request-modal');
             const body = $('#modal-body');
             
-            const formattedDate = new Date(request.created_at).toLocaleDateString('es-ES', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            const formattedDate = this.formatVenezuelanDate(request.created_at);
             
             let mudanzaInfo = '';
             if (request.request_type.includes('Mudanza')) {
                 mudanzaInfo = `
                     <div class="mudanza-info">
                         <h4>Información de la Mudanza</h4>
-                        <p><strong>Fecha:</strong> ${new Date(request.move_date).toLocaleDateString('es-ES')}</p>
+                        <p><strong>Fecha:</strong> ${this.formatVenezuelanDateOnly(request.move_date)}</p>
                         <p><strong>Transportista:</strong> ${request.transporter_name} (C.I. ${request.transporter_id_card})</p>
                         <p><strong>Vehículo:</strong> ${request.vehicle_brand} ${request.vehicle_model} - ${request.vehicle_color}</p>
                         <p><strong>Placa:</strong> ${request.vehicle_plate}</p>
@@ -626,6 +612,89 @@
                     Condo360Solicitudes.clearFieldError(field);
                 }
             });
+        },
+        
+        // Formatear fecha en zona horaria venezolana (GMT-4)
+        formatVenezuelanDate: function(dateString) {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            
+            // Ajustar a GMT-4 (Venezuela)
+            const venezuelanTime = new Date(date.getTime() - (4 * 60 * 60 * 1000));
+            
+            const day = venezuelanTime.getDate().toString().padStart(2, '0');
+            const month = (venezuelanTime.getMonth() + 1).toString().padStart(2, '0');
+            const year = venezuelanTime.getFullYear();
+            
+            let hours = venezuelanTime.getHours();
+            const minutes = venezuelanTime.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; // 0 horas = 12 AM
+            hours = hours.toString().padStart(2, '0');
+            
+            return `${day}/${month}/${year} a las ${hours}:${minutes} ${ampm}`;
+        },
+        
+        // Formatear solo fecha (sin hora)
+        formatVenezuelanDateOnly: function(dateString) {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            const venezuelanTime = new Date(date.getTime() - (4 * 60 * 60 * 1000));
+            
+            const day = venezuelanTime.getDate().toString().padStart(2, '0');
+            const month = (venezuelanTime.getMonth() + 1).toString().padStart(2, '0');
+            const year = venezuelanTime.getFullYear();
+            
+            return `${day}/${month}/${year}`;
+        },
+        
+        // Formatear fecha para mostrar en listas (más compacto)
+        formatVenezuelanDateShort: function(dateString) {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            const venezuelanTime = new Date(date.getTime() - (4 * 60 * 60 * 1000));
+            
+            const day = venezuelanTime.getDate().toString().padStart(2, '0');
+            const month = (venezuelanTime.getMonth() + 1).toString().padStart(2, '0');
+            const year = venezuelanTime.getFullYear();
+            
+            let hours = venezuelanTime.getHours();
+            const minutes = venezuelanTime.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            hours = hours.toString().padStart(2, '0');
+            
+            return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+        },
+        
+        // Obtener fecha actual en zona horaria venezolana
+        getCurrentVenezuelanDate: function() {
+            const now = new Date();
+            const venezuelanTime = new Date(now.getTime() - (4 * 60 * 60 * 1000));
+            
+            const day = venezuelanTime.getDate().toString().padStart(2, '0');
+            const month = (venezuelanTime.getMonth() + 1).toString().padStart(2, '0');
+            const year = venezuelanTime.getFullYear();
+            
+            return `${year}-${month}-${day}`;
+        },
+        
+        // Validar que la fecha sea sábado en zona horaria venezolana
+        isValidSaturdayVenezuela: function(dateString) {
+            if (!dateString) return false;
+            
+            const date = new Date(dateString);
+            const venezuelanTime = new Date(date.getTime() - (4 * 60 * 60 * 1000));
+            
+            // 6 = sábado en JavaScript (0 = domingo, 1 = lunes, ..., 6 = sábado)
+            return venezuelanTime.getDay() === 6;
         }
     };
     
