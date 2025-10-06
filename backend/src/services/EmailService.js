@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const moment = require('moment-timezone');
+const { formatDateReadable } = require('../middleware/dateFormatter');
 require('dotenv').config();
 
 // Configurar zona horaria para GMT-4
@@ -33,9 +34,27 @@ class EmailService {
   }
 
   /**
-   * Verificar configuración del servicio de correo
-   * @returns {Promise<boolean>} - True si la configuración es válida
+   * Formatear fecha correctamente para correos (GMT-4 Venezuela)
+   * @param {string|Date} date - Fecha a formatear
+   * @returns {string} - Fecha formateada correctamente
    */
+  formatDateForEmail(date) {
+    try {
+      // Si la fecha viene con información de zona horaria, interpretarla como UTC
+      if (typeof date === 'string' && date.includes('T')) {
+        // Crear fecha interpretando como UTC
+        const utcDate = moment.utc(date);
+        // Convertir a zona horaria venezolana
+        return utcDate.tz('America/Caracas').format('DD/MM/YYYY [a las] h:mm A');
+      } else {
+        // Para fechas sin información de zona horaria, usar la función del middleware
+        return formatDateReadable(date);
+      }
+    } catch (error) {
+      console.error('Error formateando fecha para correo:', error);
+      return date;
+    }
+  }
   async verifyConnection() {
     try {
       await this.transporter.verify();
@@ -192,11 +211,11 @@ class EmailService {
    */
   async sendRequestConfirmation(request, user) {
     try {
-      const formattedDate = moment(request.created_at).tz('America/Caracas').format('DD/MM/YYYY [a las] h:mm A');
+      const formattedDate = this.formatDateForEmail(request.created_at);
       
       let mudanzaDetails = '';
       if (request.request_type.includes('Mudanza')) {
-        const moveDate = moment(request.move_date).tz('America/Caracas').format('DD/MM/YYYY');
+        const moveDate = moment(request.move_date).format('DD/MM/YYYY');
         mudanzaDetails = `
           <div class="info-box">
             <h3 style="margin-top: 0; color: ${this.primaryColor};">Detalles de la Mudanza</h3>
@@ -283,7 +302,7 @@ class EmailService {
    */
   async sendRequestResponse(request, user) {
     try {
-      const formattedDate = moment(request.updated_at).tz('America/Caracas').format('DD/MM/YYYY [a las] h:mm A');
+      const formattedDate = this.formatDateForEmail(request.updated_at);
       
       let statusColor = this.secondaryColor;
       let statusText = request.status;
