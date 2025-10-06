@@ -684,6 +684,8 @@
                 response: $('#response-text').val()
             };
             
+            console.log('DEBUG handleResponseSubmit: formData=', formData);
+            
             this.setLoading(form.find('button[type="submit"]'), true);
             
             $.ajax({
@@ -695,16 +697,20 @@
                     ...formData
                 },
                 success: (response) => {
+                    console.log('DEBUG AJAX success response:', response);
                     if (response.success) {
                         this.showMessage('success', 'Respuesta enviada exitosamente');
                         this.closeModal();
                         this.loadAdminRequests();
                         this.loadAdminStats();
                     } else {
+                        console.log('DEBUG AJAX success but response.success=false:', response);
                         this.showMessage('error', response.data.message || 'Error al enviar la respuesta');
                     }
                 },
-                error: () => {
+                error: (xhr, status, error) => {
+                    console.log('DEBUG AJAX error:', xhr, status, error);
+                    console.log('DEBUG AJAX error response:', xhr.responseText);
                     this.showMessage('error', 'Error de conexión');
                 },
                 complete: () => {
