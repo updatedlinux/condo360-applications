@@ -59,12 +59,12 @@ class EmailService {
       console.log('  - Venezuelan time (manual):', venezuelanTime);
       console.log('  - Venezuelan ISO:', venezuelanTime.toISOString());
       
-      // Formatear manualmente
-      const day = venezuelanTime.getUTCDate().toString().padStart(2, '0');
-      const month = (venezuelanTime.getUTCMonth() + 1).toString().padStart(2, '0');
-      const year = venezuelanTime.getUTCFullYear();
-      const hours = venezuelanTime.getUTCHours();
-      const minutes = venezuelanTime.getUTCMinutes().toString().padStart(2, '0');
+      // Formatear manualmente usando métodos locales (no UTC)
+      const day = venezuelanTime.getDate().toString().padStart(2, '0');
+      const month = (venezuelanTime.getMonth() + 1).toString().padStart(2, '0');
+      const year = venezuelanTime.getFullYear();
+      const hours = venezuelanTime.getHours();
+      const minutes = venezuelanTime.getMinutes().toString().padStart(2, '0');
       const ampm = hours >= 12 ? 'PM' : 'AM';
       const displayHours = hours % 12 || 12;
       
