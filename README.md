@@ -150,10 +150,15 @@ SMTP_TLS_REJECT_UNAUTHORIZED=true
 WORDPRESS_URL=https://bonaventurecclub.com
 WORDPRESS_SITE_NAME=Bonaventure Country Club
 
-# Configuración de seguridad
-JWT_SECRET=tu_jwt_secret_muy_seguro
+# Configuración de seguridad (desactivada para desarrollo interno)
+# JWT_SECRET=tu_jwt_secret_muy_seguro
 RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
+RATE_LIMIT_MAX_REQUESTS=1000
+
+# Configuración de desarrollo interno
+NODE_ENV=development
+CORS_ENABLED=true
+JWT_DISABLED=true
 
 # Configuración de correos
 EMAIL_TEMPLATE_LOGO=https://bonaventurecclub.com/wp-content/uploads/2025/09/2-e1759267603471.png
@@ -201,6 +206,32 @@ SMTP_TLS_REJECT_UNAUTHORIZED=true
 - `SMTP_SECURE=false`: Usar STARTTLS (puerto 587)
 - `SMTP_TLS_REJECT_UNAUTHORIZED=true`: Verificar certificados SSL (recomendado para producción)
 - `SMTP_TLS_REJECT_UNAUTHORIZED=false`: Ignorar errores de certificados (solo para desarrollo)
+
+### Configuración para Desarrollo Interno
+
+El sistema está configurado específicamente para desarrollo interno con las siguientes características:
+
+#### CORS Sin Límites
+- **Origen**: Cualquier dominio (`origin: true`)
+- **Métodos**: GET, POST, PUT, DELETE, OPTIONS, PATCH
+- **Headers**: Content-Type, Authorization, X-Requested-With, Accept, Origin
+- **Credenciales**: Habilitadas
+- **Preflight**: Manejo automático de requests OPTIONS
+
+#### JWT Desactivado
+- **Autenticación**: Basada únicamente en WordPress (wp_user_id)
+- **Tokens**: No se requieren tokens JWT
+- **Seguridad**: Simplificada para desarrollo interno
+
+#### Rate Limiting Permisivo
+- **Límite**: 1000 requests por 15 minutos (vs 100 en producción)
+- **Desarrollo**: Rate limiting completamente deshabilitado
+- **Skip**: Automático cuando `NODE_ENV=development`
+
+#### Helmet Configuración Permisiva
+- **CSP**: Deshabilitado en desarrollo
+- **CORS Policies**: Deshabilitadas para desarrollo
+- **Headers**: Mínimos para evitar conflictos
 
 ### Configuración de WordPress
 

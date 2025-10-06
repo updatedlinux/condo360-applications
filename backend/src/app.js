@@ -34,21 +34,43 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-// Middleware de seguridad
-app.use(helmet());
-
-// Configuración de CORS
-app.use(cors({
-  origin: process.env.WORDPRESS_URL || 'https://bonaventurecclub.com',
-  credentials: true
+// Middleware de seguridad (configuración permisiva para desarrollo interno)
+app.use(helmet({
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false
 }));
 
-// Rate limiting
+// Configuración de CORS (sin límites para desarrollo interno)
+app.use(cors({
+  origin: true, // Permitir cualquier origen
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  optionsSuccessStatus: 200
+}));
+
+// Manejo de preflight requests para desarrollo interno
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
+
+// Rate limiting (configuración permisiva para desarrollo interno)
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // límite de 100 requests por ventana
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000, // límite aumentado para desarrollo
   message: {
     error: 'Demasiadas solicitudes desde esta IP, intente de nuevo más tarde.'
+  },
+  skip: (req) => {
+    // Saltar rate limiting en desarrollo
+    return process.env.NODE_ENV === 'development';
   }
 });
 app.use('/api/', limiter);

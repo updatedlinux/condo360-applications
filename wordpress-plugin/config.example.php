@@ -97,13 +97,15 @@ define('CONDO360_SOLICITUDES_CONFIG', array(
         'keep_logs_days' => 30
     ),
     
-    // Configuración de seguridad
+    // Configuración de seguridad (desactivada para desarrollo interno)
     'security' => array(
-        'rate_limit_requests' => 10, // requests por minuto
+        'rate_limit_requests' => 1000, // requests por minuto (aumentado para desarrollo)
         'rate_limit_window' => 60, // segundos
-        'block_suspicious_ips' => true,
+        'block_suspicious_ips' => false, // desactivado para desarrollo
         'require_nonce_verification' => true,
-        'sanitize_all_inputs' => true
+        'sanitize_all_inputs' => true,
+        'jwt_enabled' => false, // JWT desactivado
+        'cors_unrestricted' => true // CORS sin límites
     ),
     
     // Configuración de integración
@@ -278,13 +280,17 @@ define('CONDO360_DB_CONFIG', array(
     'backup_frequency' => 'daily'
 ));
 
-// Configuraciones de desarrollo
+// Configuraciones de desarrollo interno
 define('CONDO360_DEV_CONFIG', array(
-    'debug_mode' => false,
-    'log_api_calls' => false,
-    'show_debug_info' => false,
+    'debug_mode' => true, // Habilitado para desarrollo interno
+    'log_api_calls' => true, // Log de llamadas API
+    'show_debug_info' => true, // Mostrar información de debug
     'enable_profiling' => false,
-    'cache_disabled' => false
+    'cache_disabled' => true, // Cache deshabilitado para desarrollo
+    'cors_unrestricted' => true, // CORS sin límites
+    'jwt_disabled' => true, // JWT desactivado
+    'rate_limiting_disabled' => true, // Rate limiting desactivado
+    'security_headers_relaxed' => true // Headers de seguridad relajados
 ));
 
 // Función para obtener configuración
