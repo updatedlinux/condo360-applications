@@ -117,28 +117,31 @@
             }
         },
         
-        // Configurar calendario para mudanzas (solo sábados)
+        // Configurar calendario para mudanzas (simplificado)
         setupMudanzaCalendar: function() {
             const dateInput = $('#move_date');
             
-            // Configurar atributos del input de fecha
-            dateInput.attr('min', this.getNextSaturday());
-            dateInput.attr('max', this.getLastSaturdayOfYear());
+            // Configurar fecha mínima (hoy)
+            const today = this.getCurrentVenezuelanDate();
+            dateInput.attr('min', today);
+            
+            // Configurar fecha máxima (final del año)
+            const year = new Date().getFullYear();
+            dateInput.attr('max', `${year}-12-31`);
             
             // Agregar tooltip informativo
-            dateInput.attr('title', 'Solo se permiten sábados para mudanzas');
+            dateInput.attr('title', 'Seleccione la fecha de mudanza');
             
             // Remover eventos anteriores para evitar duplicados
             dateInput.off('change.validateMoveDate input.validateMoveDate');
             
-            // Agregar evento para validar fechas (solo change, no input)
-            dateInput.on('change.validateMoveDate', this.validateMoveDate.bind(this));
+            // Solo validar que sea fecha futura, no sábado
+            dateInput.on('change.validateMoveDate', this.validateMoveDateSimple.bind(this));
             
-            console.log('DEBUG setupMudanzaCalendar:', {
+            console.log('DEBUG setupMudanzaCalendar (simplificado):', {
                 min: dateInput.attr('min'),
                 max: dateInput.attr('max'),
-                nextSaturday: this.getNextSaturday(),
-                lastSaturday: this.getLastSaturdayOfYear()
+                today: today
             });
         },
         
@@ -225,12 +228,12 @@
             }, 10000);
         },
         
-        // Validar fecha de mudanza (solo sábados en zona horaria venezolana)
-        validateMoveDate: function(e) {
+        // Validar fecha de mudanza (simplificado - solo fecha futura)
+        validateMoveDateSimple: function(e) {
             const dateInput = $(e.target);
             const selectedDate = dateInput.val();
             
-            console.log('DEBUG validateMoveDate:', {
+            console.log('DEBUG validateMoveDateSimple:', {
                 selectedDate: selectedDate,
                 inputElement: dateInput[0]
             });
@@ -240,41 +243,17 @@
                 return true;
             }
             
-            // Verificar que sea sábado en zona horaria venezolana
-            const isValidSaturday = this.isValidSaturdayVenezuela(selectedDate);
-            console.log('DEBUG isValidSaturday:', isValidSaturday);
-            
-            if (!isValidSaturday) {
-                console.log('DEBUG: Rejecting date - not Saturday');
-                this.showFieldError(dateInput, 'Las mudanzas solo pueden ser programadas para sábados');
-                // NO limpiar el campo inmediatamente, solo mostrar error
-                return false;
-            }
-            
-            // Verificar que la fecha sea futura en zona horaria venezolana
+            // Solo verificar que la fecha sea futura
             const today = this.getCurrentVenezuelanDate();
             console.log('DEBUG today:', today);
             
             if (selectedDate < today) {
                 console.log('DEBUG: Rejecting date - not future');
                 this.showFieldError(dateInput, 'La fecha de mudanza debe ser futura');
-                // NO limpiar el campo inmediatamente, solo mostrar error
                 return false;
             }
             
-            // Verificar que esté dentro del rango permitido
-            const minDate = this.getNextSaturday();
-            const maxDate = this.getLastSaturdayOfYear();
-            console.log('DEBUG minDate:', minDate, 'maxDate:', maxDate);
-            
-            if (selectedDate < minDate || selectedDate > maxDate) {
-                console.log('DEBUG: Rejecting date - out of range');
-                this.showFieldError(dateInput, `La fecha debe estar entre ${minDate} y ${maxDate}`);
-                // NO limpiar el campo inmediatamente, solo mostrar error
-                return false;
-            }
-            
-            console.log('DEBUG: Accepting date - valid');
+            console.log('DEBUG: Accepting date - valid (future)');
             this.clearFieldError(dateInput);
             return true;
         },
@@ -310,14 +289,12 @@
                 isValid = false;
             }
             
-            // Validación específica para mudanzas
+            // Validación específica para mudanzas (simplificada)
             if (formData.request_type.includes('Mudanza')) {
                 const moveDateInput = $('#move_date');
                 if (moveDateInput.val()) {
-                    const moveDateValid = this.validateMoveDate({ target: moveDateInput[0] });
+                    const moveDateValid = this.validateMoveDateSimple({ target: moveDateInput[0] });
                     if (!moveDateValid) {
-                        // Solo limpiar el campo si la validación falla al enviar el formulario
-                        moveDateInput.val('');
                         isValid = false;
                     }
                 }
@@ -481,7 +458,8 @@
         renderAdminRequests: function(requests) {
             const container = $('#admin-requests-list');
             
-            if (requests.length === 0) {
+            // Validar que requests existe y es un array
+            if (!requests || !Array.isArray(requests) || requests.length === 0) {
                 container.html('<tr><td colspan="6" class="message info">No hay solicitudes</td></tr>');
                 return;
             }
