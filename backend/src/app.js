@@ -18,8 +18,13 @@ const { formatDatesMiddleware } = require('./middleware/dateFormatter');
 const app = express();
 const PORT = process.env.PORT || 7000;
 
-// Configurar trust proxy para manejar headers X-Forwarded-For
-app.set('trust proxy', true);
+// Configurar trust proxy para manejar headers X-Forwarded-For (solo para desarrollo interno)
+if (process.env.NODE_ENV === 'development') {
+  app.set('trust proxy', true);
+} else {
+  // En producción, ser más específico con los proxies confiables
+  app.set('trust proxy', 1); // Solo confiar en el primer proxy
+}
 
 // Configuración de Swagger
 const swaggerOptions = {
@@ -206,7 +211,7 @@ app.options('*', (req, res) => {
   res.sendStatus(200);
 });
 
-// Rate limiting (configuración permisiva para desarrollo interno)
+// Rate limiting (deshabilitado para desarrollo interno)
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000, // límite aumentado para desarrollo
@@ -215,10 +220,14 @@ const limiter = rateLimit({
   },
   skip: (req) => {
     // Saltar rate limiting en desarrollo
-    return process.env.NODE_ENV === 'development';
+    return process.env.NODE_ENV === 'development' || process.env.RATE_LIMITING_DISABLED === 'true';
   }
 });
-app.use('/api/', limiter);
+
+// Solo aplicar rate limiting si no está deshabilitado
+if (process.env.RATE_LIMITING_DISABLED !== 'true') {
+  app.use('/api/', limiter);
+}
 
 // Middleware para parsing
 app.use(express.json({ limit: '10mb' }));

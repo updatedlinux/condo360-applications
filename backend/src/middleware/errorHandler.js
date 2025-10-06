@@ -151,9 +151,9 @@ const validatePagination = (req, res, next) => {
   }
 
   req.pagination = {
-    page,
-    limit,
-    offset: (page - 1) * limit
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+    offset: parseInt((page - 1) * limit, 10)
   };
 
   next();
