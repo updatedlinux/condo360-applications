@@ -247,13 +247,24 @@ class RequestValidator {
           }),
         move_date: Joi.date().iso().required()
           .custom((value, helpers) => {
-            const date = moment(value).tz('America/Caracas');
-            if (date.day() !== 6) { // 6 = sábado
+            // Crear fecha directamente sin conversión de zona horaria
+            const date = new Date(value);
+            const dayOfWeek = date.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
+            
+            if (dayOfWeek !== 6) { // 6 = sábado
               return helpers.error('custom.saturday');
             }
-            if (date.isBefore(moment().tz('America/Caracas'), 'day')) {
+            
+            // Verificar que sea futura comparando solo la fecha (sin hora)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const checkDate = new Date(value);
+            checkDate.setHours(0, 0, 0, 0);
+            
+            if (checkDate <= today) {
               return helpers.error('custom.future');
             }
+            
             return value;
           })
           .messages({

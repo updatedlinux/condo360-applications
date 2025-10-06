@@ -822,10 +822,9 @@
             if (!dateString) return false;
             
             const date = new Date(dateString);
-            const venezuelanTime = new Date(date.getTime() - (4 * 60 * 60 * 1000));
             
             // 6 = sábado en JavaScript (0 = domingo, 1 = lunes, ..., 6 = sábado)
-            return venezuelanTime.getDay() === 6;
+            return date.getDay() === 6;
         }
     };
     
