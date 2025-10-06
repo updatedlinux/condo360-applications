@@ -251,7 +251,10 @@ class RequestValidator {
             const date = new Date(value);
             const dayOfWeek = date.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
             
+            console.log(`DEBUG move_date validation: value=${value}, date=${date}, dayOfWeek=${dayOfWeek}`);
+            
             if (dayOfWeek !== 6) { // 6 = sábado
+              console.log(`DEBUG: Rejecting date ${value} - day ${dayOfWeek} is not Saturday (6)`);
               return helpers.error('custom.saturday');
             }
             
@@ -261,10 +264,14 @@ class RequestValidator {
             const checkDate = new Date(value);
             checkDate.setHours(0, 0, 0, 0);
             
+            console.log(`DEBUG: today=${today}, checkDate=${checkDate}, isFuture=${checkDate > today}`);
+            
             if (checkDate <= today) {
+              console.log(`DEBUG: Rejecting date ${value} - not future`);
               return helpers.error('custom.future');
             }
             
+            console.log(`DEBUG: Accepting date ${value} - valid Saturday and future`);
             return value;
           })
           .messages({
