@@ -339,6 +339,8 @@ class RequestController {
   async updateRequest(req, res, next) {
     try {
       const { id } = req.params;
+      
+      console.log(`DEBUG updateRequest: id=${id}, body=`, req.body);
 
       // Verificar que la solicitud existe
       const existingRequest = await this.requestModel.findById(id);
@@ -351,8 +353,12 @@ class RequestController {
       }
 
       // Validar datos de entrada
+      console.log(`DEBUG validateUpdate: validating data=`, req.body);
       const validation = RequestValidator.validateUpdate(req.body);
+      console.log(`DEBUG validation result:`, validation);
+      
       if (validation.error) {
+        console.log(`DEBUG validation error:`, validation.error);
         return res.status(400).json({
           success: false,
           error: 'Datos de entrada inválidos',
