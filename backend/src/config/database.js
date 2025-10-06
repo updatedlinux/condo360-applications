@@ -10,10 +10,10 @@ const dbConfig = {
   database: process.env.DB_NAME || 'wordpress',
   charset: 'utf8mb4',
   timezone: '-04:00', // GMT-4
+  connectionLimit: 10,
+  queueLimit: 0,
   acquireTimeout: 60000,
-  timeout: 60000,
-  reconnect: true,
-  connectionLimit: 10
+  timeout: 60000
 };
 
 // Crear pool de conexiones
