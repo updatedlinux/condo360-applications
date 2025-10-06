@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prueba de Validación de Fechas</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Prueba de Validación de Fechas</h1>
+    
+    <input type="date" id="test-date" />
+    <button onclick="testValidation()">Probar Validación</button>
+    
+    <div id="result"></div>
+
+    <script>
+        // Función corregida del frontend
+        function isValidSaturdayVenezuela(dateString) {
+            if (!dateString) return false;
+            
+            const date = new Date(dateString);
+            
+            // 6 = sábado en JavaScript (0 = domingo, 1 = lunes, ..., 6 = sábado)
+            return date.getDay() === 6;
+        }
+
+        function testValidation() {
+            const dateInput = $('#test-date');
+            const selectedDate = dateInput.val();
+            
+            console.log('Fecha seleccionada:', selectedDate);
+            
+            if (!selectedDate) {
+                $('#result').html('<p>No se ha seleccionado ninguna fecha</p>');
+                return;
+            }
+            
+            const isValid = isValidSaturdayVenezuela(selectedDate);
+            const date = new Date(selectedDate);
+            const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            
+            $('#result').html(`
+                <p><strong>Fecha:</strong> ${selectedDate}</p>
+                <p><strong>Día de la semana:</strong> ${dayNames[date.getDay()]} (${date.getDay()})</p>
+                <p><strong>Es sábado:</strong> ${isValid ? '✅ SÍ' : '❌ NO'}</p>
+                <p><strong>Validación:</strong> ${isValid ? '✅ VÁLIDA' : '❌ INVÁLIDA'}</p>
+            `);
+        }
+
+        // Configurar calendario para mostrar solo sábados
+        $(document).ready(function() {
+            const dateInput = $('#test-date');
+            
+            // Configurar atributos del input de fecha
+            dateInput.attr('min', '2025-10-11');
+            dateInput.attr('max', '2025-12-31');
+            
+            // Agregar evento para validar fechas
+            dateInput.on('change', function() {
+                const selectedDate = $(this).val();
+                console.log('Fecha cambiada:', selectedDate);
+                
+                if (selectedDate && !isValidSaturdayVenezuela(selectedDate)) {
+                    alert('Solo se permiten sábados para mudanzas');
+                    $(this).val('');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

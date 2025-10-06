@@ -262,10 +262,7 @@ class RequestValidator {
             const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
             const dayOfWeek = date.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
             
-            console.log(`DEBUG move_date validation: original=${value}, dateStr=${dateStr}, date=${date}, dayOfWeek=${dayOfWeek}`);
-            
             if (dayOfWeek !== 6) { // 6 = sábado
-              console.log(`DEBUG: Rejecting date ${dateStr} - day ${dayOfWeek} is not Saturday (6)`);
               return helpers.error('custom.saturday');
             }
             
@@ -275,14 +272,9 @@ class RequestValidator {
             const checkDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
             checkDate.setHours(0, 0, 0, 0);
             
-            console.log(`DEBUG: today=${today.toISOString().split('T')[0]}, checkDate=${checkDate.toISOString().split('T')[0]}, isFuture=${checkDate > today}`);
-            
             if (checkDate <= today) {
-              console.log(`DEBUG: Rejecting date ${dateStr} - not future`);
               return helpers.error('custom.future');
             }
-            
-            console.log(`DEBUG: Accepting date ${dateStr} - valid Saturday and future`);
             return value;
           })
           .messages({

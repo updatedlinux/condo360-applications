@@ -233,13 +233,22 @@
             const dateInput = $(e.target);
             const selectedDate = dateInput.val();
             
+            console.log('DEBUG validateMoveDate:', {
+                selectedDate: selectedDate,
+                inputElement: dateInput[0]
+            });
+            
             if (!selectedDate) {
                 this.clearFieldError(dateInput);
                 return true;
             }
             
             // Verificar que sea sábado en zona horaria venezolana
-            if (!this.isValidSaturdayVenezuela(selectedDate)) {
+            const isValidSaturday = this.isValidSaturdayVenezuela(selectedDate);
+            console.log('DEBUG isValidSaturday:', isValidSaturday);
+            
+            if (!isValidSaturday) {
+                console.log('DEBUG: Rejecting date - not Saturday');
                 this.showFieldError(dateInput, 'Las mudanzas solo pueden ser programadas para sábados (zona horaria Venezuela GMT-4)');
                 dateInput.val(''); // Limpiar el campo
                 return false;
@@ -247,8 +256,10 @@
             
             // Verificar que la fecha sea futura en zona horaria venezolana
             const today = this.getCurrentVenezuelanDate();
+            console.log('DEBUG today:', today);
             
             if (selectedDate < today) {
+                console.log('DEBUG: Rejecting date - not future');
                 this.showFieldError(dateInput, 'La fecha de mudanza debe ser futura');
                 dateInput.val(''); // Limpiar el campo
                 return false;
@@ -257,13 +268,16 @@
             // Verificar que esté dentro del rango permitido
             const minDate = this.getNextSaturday();
             const maxDate = this.getLastSaturdayOfYear();
+            console.log('DEBUG minDate:', minDate, 'maxDate:', maxDate);
             
             if (selectedDate < minDate || selectedDate > maxDate) {
+                console.log('DEBUG: Rejecting date - out of range');
                 this.showFieldError(dateInput, `La fecha debe estar entre ${minDate} y ${maxDate}`);
                 dateInput.val(''); // Limpiar el campo
                 return false;
             }
             
+            console.log('DEBUG: Accepting date - valid');
             this.clearFieldError(dateInput);
             return true;
         },
@@ -808,11 +822,10 @@
         // Obtener fecha actual en zona horaria venezolana
         getCurrentVenezuelanDate: function() {
             const now = new Date();
-            const venezuelanTime = new Date(now.getTime() - (4 * 60 * 60 * 1000));
             
-            const day = venezuelanTime.getDate().toString().padStart(2, '0');
-            const month = (venezuelanTime.getMonth() + 1).toString().padStart(2, '0');
-            const year = venezuelanTime.getFullYear();
+            const day = now.getDate().toString().padStart(2, '0');
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const year = now.getFullYear();
             
             return `${year}-${month}-${day}`;
         },
