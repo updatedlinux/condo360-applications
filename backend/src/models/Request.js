@@ -120,26 +120,46 @@ class RequestModel {
   }
 
   /**
-   * Obtener todas las solicitudes (para administradores)
+   * Obtener todas las solicitudes (para administradores) con filtros
    * @param {number} limit - Límite de resultados
    * @param {number} offset - Offset para paginación
+   * @param {Object} filters - Filtros opcionales
    * @returns {Promise<Array>} - Lista de solicitudes
    */
-  async findAll(limit = 20, offset = 0) {
+  async findAll(limit = 20, offset = 0, filters = {}) {
     // Convertir a enteros de forma segura
     const limitInt = this.safeParseInt(limit, 20);
     const offsetInt = this.safeParseInt(offset, 0);
     
-    console.log(`DEBUG findAll: limit=${limit}->${limitInt}, offset=${offset}->${offsetInt}`);
+    console.log(`DEBUG findAll: limit=${limit}->${limitInt}, offset=${offset}->${offsetInt}, filters=`, filters);
+    
+    // Construir WHERE clause dinámicamente
+    let whereClause = '';
+    const whereConditions = [];
+    
+    if (filters.status && filters.status.trim() !== '') {
+      whereConditions.push(`r.status = '${filters.status}'`);
+    }
+    
+    if (filters.type && filters.type.trim() !== '') {
+      whereConditions.push(`r.request_type = '${filters.type}'`);
+    }
+    
+    if (whereConditions.length > 0) {
+      whereClause = 'WHERE ' + whereConditions.join(' AND ');
+    }
     
     // Usar interpolación directa para LIMIT y OFFSET (solución definitiva)
     const sql = `
       SELECT r.*, u.display_name, u.user_email, u.user_nicename
       FROM condo360solicitudes_requests r
       LEFT JOIN wp_users u ON r.wp_user_id = u.ID
+      ${whereClause}
       ORDER BY r.created_at DESC
       LIMIT ${limitInt} OFFSET ${offsetInt}
     `;
+    
+    console.log('DEBUG SQL:', sql);
     
     return await this.db.query(sql);
   }
@@ -161,14 +181,34 @@ class RequestModel {
   }
 
   /**
-   * Contar total de solicitudes
+   * Contar total de solicitudes (para administradores) con filtros
+   * @param {Object} filters - Filtros opcionales
    * @returns {Promise<number>} - Total de solicitudes
    */
-  async countAll() {
+  async countAll(filters = {}) {
+    // Construir WHERE clause dinámicamente
+    let whereClause = '';
+    const whereConditions = [];
+    
+    if (filters.status && filters.status.trim() !== '') {
+      whereConditions.push(`status = '${filters.status}'`);
+    }
+    
+    if (filters.type && filters.type.trim() !== '') {
+      whereConditions.push(`request_type = '${filters.type}'`);
+    }
+    
+    if (whereConditions.length > 0) {
+      whereClause = 'WHERE ' + whereConditions.join(' AND ');
+    }
+    
     const sql = `
       SELECT COUNT(*) as total
       FROM condo360solicitudes_requests
+      ${whereClause}
     `;
+    
+    console.log('DEBUG countAll SQL:', sql);
     
     const result = await this.db.query(sql);
     return result[0].total;

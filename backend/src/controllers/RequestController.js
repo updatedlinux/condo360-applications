@@ -152,6 +152,18 @@ class RequestController {
    *           type: integer
    *         description: ID del usuario para filtrar sus solicitudes
    *       - in: query
+   *         name: status
+   *         schema:
+   *           type: string
+   *           enum: [Recibida, Aprobado, Rechazado, Atendido]
+   *         description: Filtrar por estado de la solicitud
+   *       - in: query
+   *         name: type
+   *         schema:
+   *           type: string
+   *           enum: [Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos]
+   *         description: Filtrar por tipo de solicitud
+   *       - in: query
    *         name: page
    *         schema:
    *           type: integer
@@ -191,7 +203,7 @@ class RequestController {
    */
   async getRequests(req, res, next) {
     try {
-      const { user_id } = req.query;
+      const { user_id, status, type } = req.query;
       const { page, limit, offset } = req.pagination;
 
       let requests, total;
@@ -201,9 +213,9 @@ class RequestController {
         requests = await this.requestModel.findByUserId(user_id, limit, offset);
         total = await this.requestModel.countByUserId(user_id);
       } else {
-        // Obtener todas las solicitudes (para administradores)
-        requests = await this.requestModel.findAll(limit, offset);
-        total = await this.requestModel.countAll();
+        // Obtener todas las solicitudes (para administradores) con filtros
+        requests = await this.requestModel.findAll(limit, offset, { status, type });
+        total = await this.requestModel.countAll({ status, type });
       }
 
       const totalPages = Math.ceil(total / limit);

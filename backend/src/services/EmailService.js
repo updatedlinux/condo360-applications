@@ -34,15 +34,12 @@ class EmailService {
   }
 
   /**
-   * Formatear fecha restando 4 horas manualmente (solución directa)
+   * Formatear fecha restando 4 horas manualmente (GMT-4 Venezuela)
    * @param {string|Date} date - Fecha a formatear
    * @returns {string} - Fecha formateada correctamente
    */
   formatDateManual(date) {
     try {
-      console.log('🔍 DEBUG formatDateManual:');
-      console.log('  - Input date:', date);
-      
       // Convertir a objeto Date si es necesario
       let dateObj;
       if (date instanceof Date) {
@@ -51,13 +48,8 @@ class EmailService {
         dateObj = new Date(date);
       }
       
-      console.log('  - Date object:', dateObj);
-      console.log('  - Date ISO:', dateObj.toISOString());
-      
       // Restar 4 horas manualmente (GMT-4)
       const venezuelanTime = new Date(dateObj.getTime() - (4 * 60 * 60 * 1000));
-      console.log('  - Venezuelan time (manual):', venezuelanTime);
-      console.log('  - Venezuelan ISO:', venezuelanTime.toISOString());
       
       // Formatear manualmente usando métodos locales (no UTC)
       const day = venezuelanTime.getDate().toString().padStart(2, '0');
@@ -68,82 +60,7 @@ class EmailService {
       const ampm = hours >= 12 ? 'PM' : 'AM';
       const displayHours = hours % 12 || 12;
       
-      const formatted = `${day}/${month}/${year} a las ${displayHours}:${minutes} ${ampm}`;
-      console.log('  - Manual formatted:', formatted);
-      
-      return formatted;
-    } catch (error) {
-      console.error('Error en formatDateManual:', error);
-      return date;
-    }
-  }
-  formatDateForEmail(date) {
-    try {
-      console.log('🔍 DEBUG formatDateForEmail:');
-      console.log('  - Input date:', date);
-      console.log('  - Type:', typeof date);
-      
-      // Si es un objeto Date, convertirlo a string UTC primero
-      if (date instanceof Date) {
-        console.log('  - Processing as Date object');
-        const utcString = date.toISOString();
-        console.log('  - UTC string:', utcString);
-        
-        // Crear fecha UTC y convertir directamente a Venezuela
-        // Usar moment.utc() para interpretar como UTC puro
-        const utcMoment = moment.utc(utcString);
-        console.log('  - UTC moment:', utcMoment.format());
-        
-        // Convertir a zona horaria venezolana (GMT-4)
-        const venezuelanMoment = utcMoment.clone().tz('America/Caracas');
-        console.log('  - Venezuelan moment:', venezuelanMoment.format());
-        
-        const formatted = venezuelanMoment.format('DD/MM/YYYY [a las] h:mm A');
-        console.log('  - Final formatted:', formatted);
-        
-        // Debug adicional: mostrar la diferencia de horas
-        const utcHour = utcMoment.hour();
-        const venezuelanHour = venezuelanMoment.hour();
-        console.log('  - UTC hour:', utcHour);
-        console.log('  - Venezuelan hour:', venezuelanHour);
-        console.log('  - Hour difference:', utcHour - venezuelanHour);
-        
-        // Debug adicional: mostrar la fecha actual del sistema
-        const now = new Date();
-        const nowUTC = moment.utc(now);
-        const nowVenezuela = moment.utc(now).tz('America/Caracas');
-        console.log('  - System now UTC:', nowUTC.format());
-        console.log('  - System now Venezuela:', nowVenezuela.format());
-        
-        return formatted;
-      }
-      
-      // Si la fecha viene con información de zona horaria, interpretarla como UTC
-      if (typeof date === 'string' && date.includes('T')) {
-        console.log('  - Processing as UTC string');
-        
-        // Si la fecha ya tiene zona horaria -04:00, removerla y tratar como UTC
-        let dateToProcess = date;
-        if (date.includes('-04:00')) {
-          console.log('  - Removing -04:00 timezone info');
-          dateToProcess = date.replace('-04:00', '');
-        }
-        
-        // Crear fecha interpretando como UTC
-        const utcDate = moment.utc(dateToProcess);
-        console.log('  - UTC moment:', utcDate.format());
-        // Convertir a zona horaria venezolana
-        const venezuelanDate = utcDate.tz('America/Caracas');
-        console.log('  - Venezuelan moment:', venezuelanDate.format());
-        const formatted = venezuelanDate.format('DD/MM/YYYY [a las] h:mm A');
-        console.log('  - Final formatted:', formatted);
-        return formatted;
-      } else {
-        console.log('  - Processing with middleware function');
-        const formatted = formatDateReadable(date);
-        console.log('  - Middleware result:', formatted);
-        return formatted;
-      }
+      return `${day}/${month}/${year} a las ${displayHours}:${minutes} ${ampm}`;
     } catch (error) {
       console.error('Error formateando fecha para correo:', error);
       return date;
