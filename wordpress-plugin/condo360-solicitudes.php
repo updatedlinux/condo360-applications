@@ -317,7 +317,7 @@ class Condo360Solicitudes {
     }
     
     /**
-     * Shortcode para panel de administración
+     * Shortcode para panel de junta de condominio
      */
     public function shortcode_admin($atts) {
         $atts = shortcode_atts(array(
@@ -333,7 +333,7 @@ class Condo360Solicitudes {
         ?>
         <div class="condo360-admin-panel">
             <div class="condo360-header">
-                <h2><?php _e('Panel de Administración - Solicitudes', 'condo360-solicitudes'); ?></h2>
+                <h2><?php _e('Panel de Junta de Condominio - Solicitudes', 'condo360-solicitudes'); ?></h2>
                 <div class="admin-stats" id="admin-stats">
                     <div class="loading"><?php _e('Cargando estadísticas...', 'condo360-solicitudes'); ?></div>
                 </div>
@@ -422,7 +422,7 @@ class Condo360Solicitudes {
                         
                         <div class="form-group">
                             <label for="response-text"><?php _e('Respuesta:', 'condo360-solicitudes'); ?></label>
-                            <textarea id="response-text" name="response" rows="5" required placeholder="<?php _e('Escriba la respuesta de la administración...', 'condo360-solicitudes'); ?>"></textarea>
+                            <textarea id="response-text" name="response" rows="5" required placeholder="<?php _e('Escriba la respuesta de la junta de condominio...', 'condo360-solicitudes'); ?>"></textarea>
                         </div>
                         
                         <div class="form-actions">

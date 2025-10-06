@@ -115,7 +115,7 @@ const swaggerOptions = {
             },
             response: {
               type: 'string',
-              description: 'Respuesta de la administración'
+              description: 'Respuesta de la junta de condominio'
             },
             created_at: {
               type: 'string',

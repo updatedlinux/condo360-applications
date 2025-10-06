@@ -237,7 +237,7 @@
  *                 type: string
  *                 minLength: 10
  *                 maxLength: 2000
- *                 description: Respuesta de la administración
+ *                 description: Respuesta de la junta de condominio
  *                 example: "Solicitud aprobada. Puede proceder con la mudanza el día programado."
  *     responses:
  *       200:

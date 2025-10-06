@@ -255,7 +255,7 @@ class EmailService {
 
         ${mudanzaDetails}
 
-        <p>Su solicitud será revisada por la administración y recibirá una respuesta en breve.</p>
+        <p>Su solicitud será revisada por la junta de condominio y recibirá una respuesta en breve.</p>
         <p>Puede consultar el estado de sus solicitudes en cualquier momento desde el portal de residentes.</p>
       `;
 
@@ -306,7 +306,7 @@ class EmailService {
       const content = `
         <h2>Respuesta a su Solicitud</h2>
         <p>Estimado/a <strong>${user.display_name}</strong>,</p>
-        <p>Su solicitud ha sido procesada por la administración. A continuación encontrará la respuesta:</p>
+        <p>Su solicitud ha sido procesada por la junta de condominio. A continuación encontrará la respuesta:</p>
         
         <div class="info-box">
           <div class="info-row">
@@ -328,11 +328,11 @@ class EmailService {
         </div>
 
         <div class="info-box">
-          <h3 style="margin-top: 0; color: ${this.primaryColor};">Respuesta de la Administración</h3>
+          <h3 style="margin-top: 0; color: ${this.primaryColor};">Respuesta de la Junta de Condominio</h3>
           <p>${request.response}</p>
         </div>
 
-        <p>Si tiene alguna pregunta adicional, no dude en contactar a la administración.</p>
+        <p>Si tiene alguna pregunta adicional, no dude en contactar a la junta de condominio.</p>
         <p>Gracias por utilizar el sistema de solicitudes de ${this.siteName}.</p>
       `;
 

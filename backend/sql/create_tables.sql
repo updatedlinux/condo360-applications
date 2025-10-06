@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `condo360solicitudes_requests` (
   `driver_name` VARCHAR(255) NULL COMMENT 'Nombre del chofer para mudanzas',
   `driver_id_card` VARCHAR(50) NULL COMMENT 'Cédula del chofer para mudanzas',
   `status` ENUM('Recibida', 'Aprobado', 'Rechazado', 'Atendido') DEFAULT 'Recibida',
-  `response` TEXT NULL COMMENT 'Respuesta de la administración',
+  `response` TEXT NULL COMMENT 'Respuesta de la junta de condominio',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   

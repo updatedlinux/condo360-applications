@@ -37,7 +37,7 @@
             $('#condo360-request-form').on('submit', this.handleFormSubmit.bind(this));
             $('#request_type').on('change', this.handleRequestTypeChange.bind(this));
             
-            // Panel de administración
+            // Panel de junta de condominio
             $('#filter-status, #filter-type').on('change', this.handleFilterChange.bind(this));
             $(document).on('click', '.view-request', this.handleViewRequest.bind(this));
             $(document).on('click', '.respond-request', this.handleRespondRequest.bind(this));
@@ -55,7 +55,7 @@
             $(document).on('click', '.pagination-btn', this.handlePagination.bind(this));
             
             // Validación de fecha de mudanza
-            $('#move_date').on('change', this.validateMoveDate.bind(this));
+            $('#move_date').on('change', this.validateMoveDateSimple.bind(this));
             
             // Restricción de números para campos de cédula
             $('#transporter_id_card, #driver_id_card').on('input', function(e) {
@@ -218,7 +218,7 @@
                                     <h5>Próximos pasos:</h5>
                                     <ul>
                                         <li>Recibirá un correo de confirmación en breve</li>
-                                        <li>La administración revisará su solicitud</li>
+                                        <li>La junta de condominio revisará su solicitud</li>
                                         <li>Se le notificará la respuesta por correo</li>
                                     </ul>
                                 </div>
@@ -384,7 +384,7 @@
             `;
         },
         
-        // Cargar datos del panel de administración
+        // Cargar datos del panel de junta de condominio
         loadAdminData: function() {
             this.loadAdminStats();
             this.loadAdminRequests();
@@ -607,7 +607,7 @@
                         ${mudanzaInfo}
                         ${request.response ? `
                             <div class="response-section">
-                                <h4>Respuesta de la Administración</h4>
+                                <h4>Respuesta de la Junta de Condominio</h4>
                                 <div class="response-text">${request.response}</div>
                             </div>
                         ` : ''}

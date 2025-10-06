@@ -131,7 +131,7 @@ class RequestController {
         confirmation: {
           message: 'Su solicitud ha sido recibida correctamente',
           timeframe: '24 horas hábiles',
-          details: 'La administración revisará su solicitud y le enviará una respuesta por correo electrónico'
+          details: 'La junta de condominio revisará su solicitud y le enviará una respuesta por correo electrónico'
         }
       });
     } catch (error) {
@@ -304,7 +304,7 @@ class RequestController {
    *                 type: string
    *                 minLength: 10
    *                 maxLength: 2000
-   *                 description: Respuesta de la administración
+   *                 description: Respuesta de la junta de condominio
    *     responses:
    *       200:
    *         description: Solicitud actualizada exitosamente
