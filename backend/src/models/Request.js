@@ -247,31 +247,42 @@ class RequestValidator {
           }),
         move_date: Joi.date().iso().required()
           .custom((value, helpers) => {
-            // Crear fecha directamente sin conversión de zona horaria
-            const date = new Date(value);
+            // Extraer solo la fecha sin considerar la hora o zona horaria
+            let dateStr;
+            if (typeof value === 'string') {
+              // Si viene como string "YYYY-MM-DD", usar directamente
+              dateStr = value.split('T')[0]; // Tomar solo la parte de fecha
+            } else {
+              // Si viene como objeto Date, convertir a string YYYY-MM-DD
+              dateStr = value.toISOString().split('T')[0];
+            }
+            
+            // Crear fecha usando solo año, mes y día (sin hora)
+            const [year, month, day] = dateStr.split('-');
+            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
             const dayOfWeek = date.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
             
-            console.log(`DEBUG move_date validation: value=${value}, date=${date}, dayOfWeek=${dayOfWeek}`);
+            console.log(`DEBUG move_date validation: original=${value}, dateStr=${dateStr}, date=${date}, dayOfWeek=${dayOfWeek}`);
             
             if (dayOfWeek !== 6) { // 6 = sábado
-              console.log(`DEBUG: Rejecting date ${value} - day ${dayOfWeek} is not Saturday (6)`);
+              console.log(`DEBUG: Rejecting date ${dateStr} - day ${dayOfWeek} is not Saturday (6)`);
               return helpers.error('custom.saturday');
             }
             
             // Verificar que sea futura comparando solo la fecha (sin hora)
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const checkDate = new Date(value);
+            const checkDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
             checkDate.setHours(0, 0, 0, 0);
             
-            console.log(`DEBUG: today=${today}, checkDate=${checkDate}, isFuture=${checkDate > today}`);
+            console.log(`DEBUG: today=${today.toISOString().split('T')[0]}, checkDate=${checkDate.toISOString().split('T')[0]}, isFuture=${checkDate > today}`);
             
             if (checkDate <= today) {
-              console.log(`DEBUG: Rejecting date ${value} - not future`);
+              console.log(`DEBUG: Rejecting date ${dateStr} - not future`);
               return helpers.error('custom.future');
             }
             
-            console.log(`DEBUG: Accepting date ${value} - valid Saturday and future`);
+            console.log(`DEBUG: Accepting date ${dateStr} - valid Saturday and future`);
             return value;
           })
           .messages({
