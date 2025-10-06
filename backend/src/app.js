@@ -26,6 +26,10 @@ const swaggerOptions = {
       title: 'Condominio360 Solicitudes API',
       version: '1.0.0',
       description: 'API para el módulo de solicitudes de Condominio360',
+      contact: {
+        name: 'Condominio360',
+        email: 'admin@bonaventurecclub.com'
+      }
     },
     servers: [
       {
@@ -33,8 +37,137 @@ const swaggerOptions = {
         description: 'Servidor de desarrollo',
       },
     ],
+    components: {
+      schemas: {
+        Request: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'integer',
+              description: 'ID único de la solicitud'
+            },
+            wp_user_id: {
+              type: 'integer',
+              description: 'ID del usuario de WordPress'
+            },
+            request_type: {
+              type: 'string',
+              enum: ['Mudanza - Entrada', 'Mudanza - Salida', 'Sugerencias', 'Reclamos'],
+              description: 'Tipo de solicitud'
+            },
+            details: {
+              type: 'string',
+              description: 'Detalles de la solicitud'
+            },
+            move_date: {
+              type: 'string',
+              format: 'date',
+              description: 'Fecha de mudanza'
+            },
+            transporter_name: {
+              type: 'string',
+              description: 'Nombre del transportista'
+            },
+            transporter_id_card: {
+              type: 'string',
+              description: 'Cédula del transportista'
+            },
+            vehicle_brand: {
+              type: 'string',
+              description: 'Marca del vehículo'
+            },
+            vehicle_model: {
+              type: 'string',
+              description: 'Modelo del vehículo'
+            },
+            vehicle_plate: {
+              type: 'string',
+              description: 'Placa del vehículo'
+            },
+            vehicle_color: {
+              type: 'string',
+              description: 'Color del vehículo'
+            },
+            driver_name: {
+              type: 'string',
+              description: 'Nombre del chofer'
+            },
+            driver_id_card: {
+              type: 'string',
+              description: 'Cédula del chofer'
+            },
+            status: {
+              type: 'string',
+              enum: ['Recibida', 'Aprobado', 'Rechazado', 'Atendido'],
+              description: 'Estado de la solicitud'
+            },
+            response: {
+              type: 'string',
+              description: 'Respuesta de la administración'
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Fecha de creación'
+            },
+            updated_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Fecha de última actualización'
+            },
+            display_name: {
+              type: 'string',
+              description: 'Nombre para mostrar del usuario'
+            },
+            user_email: {
+              type: 'string',
+              format: 'email',
+              description: 'Email del usuario'
+            },
+            user_nicename: {
+              type: 'string',
+              description: 'Nombre de usuario'
+            }
+          }
+        },
+        Error: {
+          type: 'object',
+          properties: {
+            error: {
+              type: 'string',
+              description: 'Tipo de error'
+            },
+            message: {
+              type: 'string',
+              description: 'Mensaje de error'
+            },
+            status: {
+              type: 'integer',
+              description: 'Código de estado HTTP'
+            }
+          }
+        },
+        Success: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              description: 'Indica si la operación fue exitosa'
+            },
+            message: {
+              type: 'string',
+              description: 'Mensaje de respuesta'
+            },
+            data: {
+              type: 'object',
+              description: 'Datos de respuesta'
+            }
+          }
+        }
+      }
+    }
   },
-  apis: ['./src/routes/*.js', './src/models/*.js'],
+  apis: ['./src/routes/*.js', './src/controllers/*.js', './src/docs/*.js'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);

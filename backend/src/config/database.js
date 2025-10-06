@@ -11,9 +11,7 @@ const dbConfig = {
   charset: 'utf8mb4',
   timezone: '-04:00', // GMT-4
   connectionLimit: 10,
-  queueLimit: 0,
-  acquireTimeout: 60000,
-  timeout: 60000
+  queueLimit: 0
 };
 
 // Crear pool de conexiones
