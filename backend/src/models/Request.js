@@ -100,22 +100,23 @@ class RequestModel {
    * @returns {Promise<Array>} - Lista de solicitudes
    */
   async findByUserId(wp_user_id, limit = 20, offset = 0) {
-    const sql = `
-      SELECT r.*, u.display_name, u.user_email, u.user_nicename
-      FROM condo360solicitudes_requests r
-      LEFT JOIN wp_users u ON r.wp_user_id = u.ID
-      WHERE r.wp_user_id = ?
-      ORDER BY r.created_at DESC
-      LIMIT ? OFFSET ?
-    `;
-    
     // Convertir a enteros de forma segura
     const limitInt = this.safeParseInt(limit, 20);
     const offsetInt = this.safeParseInt(offset, 0);
     
     console.log(`DEBUG findByUserId: wp_user_id=${wp_user_id}, limit=${limit}->${limitInt}, offset=${offset}->${offsetInt}`);
     
-    return await this.db.query(sql, [wp_user_id, limitInt, offsetInt]);
+    // Usar interpolación directa para LIMIT y OFFSET (solución definitiva)
+    const sql = `
+      SELECT r.*, u.display_name, u.user_email, u.user_nicename
+      FROM condo360solicitudes_requests r
+      LEFT JOIN wp_users u ON r.wp_user_id = u.ID
+      WHERE r.wp_user_id = ?
+      ORDER BY r.created_at DESC
+      LIMIT ${limitInt} OFFSET ${offsetInt}
+    `;
+    
+    return await this.db.query(sql, [wp_user_id]);
   }
 
   /**
@@ -125,21 +126,22 @@ class RequestModel {
    * @returns {Promise<Array>} - Lista de solicitudes
    */
   async findAll(limit = 20, offset = 0) {
-    const sql = `
-      SELECT r.*, u.display_name, u.user_email, u.user_nicename
-      FROM condo360solicitudes_requests r
-      LEFT JOIN wp_users u ON r.wp_user_id = u.ID
-      ORDER BY r.created_at DESC
-      LIMIT ? OFFSET ?
-    `;
-    
     // Convertir a enteros de forma segura
     const limitInt = this.safeParseInt(limit, 20);
     const offsetInt = this.safeParseInt(offset, 0);
     
     console.log(`DEBUG findAll: limit=${limit}->${limitInt}, offset=${offset}->${offsetInt}`);
     
-    return await this.db.query(sql, [limitInt, offsetInt]);
+    // Usar interpolación directa para LIMIT y OFFSET (solución definitiva)
+    const sql = `
+      SELECT r.*, u.display_name, u.user_email, u.user_nicename
+      FROM condo360solicitudes_requests r
+      LEFT JOIN wp_users u ON r.wp_user_id = u.ID
+      ORDER BY r.created_at DESC
+      LIMIT ${limitInt} OFFSET ${offsetInt}
+    `;
+    
+    return await this.db.query(sql);
   }
 
   /**
