@@ -125,23 +125,20 @@
             dateInput.attr('min', this.getNextSaturday());
             dateInput.attr('max', this.getLastSaturdayOfYear());
             
-            // Agregar evento para validar fechas
-            dateInput.on('change', this.validateMoveDate.bind(this));
-            dateInput.on('input', this.validateMoveDate.bind(this));
-            
             // Agregar tooltip informativo
             dateInput.attr('title', 'Solo se permiten sábados para mudanzas');
             
-            // Agregar atributo step para restringir días
-            dateInput.attr('step', '7'); // Solo permite saltos de 7 días (sábados)
+            // Remover eventos anteriores para evitar duplicados
+            dateInput.off('change.validateMoveDate input.validateMoveDate');
             
-            // Agregar evento click para mostrar solo sábados
-            dateInput.on('click', function() {
-                // Forzar que solo se puedan seleccionar sábados
-                const currentValue = $(this).val();
-                if (currentValue && !Condo360Solicitudes.isValidSaturdayVenezuela(currentValue)) {
-                    $(this).val('');
-                }
+            // Agregar evento para validar fechas (solo change, no input)
+            dateInput.on('change.validateMoveDate', this.validateMoveDate.bind(this));
+            
+            console.log('DEBUG setupMudanzaCalendar:', {
+                min: dateInput.attr('min'),
+                max: dateInput.attr('max'),
+                nextSaturday: this.getNextSaturday(),
+                lastSaturday: this.getLastSaturdayOfYear()
             });
         },
         
@@ -249,8 +246,8 @@
             
             if (!isValidSaturday) {
                 console.log('DEBUG: Rejecting date - not Saturday');
-                this.showFieldError(dateInput, 'Las mudanzas solo pueden ser programadas para sábados (zona horaria Venezuela GMT-4)');
-                dateInput.val(''); // Limpiar el campo
+                this.showFieldError(dateInput, 'Las mudanzas solo pueden ser programadas para sábados');
+                // NO limpiar el campo inmediatamente, solo mostrar error
                 return false;
             }
             
@@ -261,7 +258,7 @@
             if (selectedDate < today) {
                 console.log('DEBUG: Rejecting date - not future');
                 this.showFieldError(dateInput, 'La fecha de mudanza debe ser futura');
-                dateInput.val(''); // Limpiar el campo
+                // NO limpiar el campo inmediatamente, solo mostrar error
                 return false;
             }
             
@@ -273,7 +270,7 @@
             if (selectedDate < minDate || selectedDate > maxDate) {
                 console.log('DEBUG: Rejecting date - out of range');
                 this.showFieldError(dateInput, `La fecha debe estar entre ${minDate} y ${maxDate}`);
-                dateInput.val(''); // Limpiar el campo
+                // NO limpiar el campo inmediatamente, solo mostrar error
                 return false;
             }
             
@@ -311,6 +308,19 @@
             if (formData.details && formData.details.length < 10) {
                 this.showFieldError($('#details'), 'Los detalles deben tener al menos 10 caracteres');
                 isValid = false;
+            }
+            
+            // Validación específica para mudanzas
+            if (formData.request_type.includes('Mudanza')) {
+                const moveDateInput = $('#move_date');
+                if (moveDateInput.val()) {
+                    const moveDateValid = this.validateMoveDate({ target: moveDateInput[0] });
+                    if (!moveDateValid) {
+                        // Solo limpiar el campo si la validación falla al enviar el formulario
+                        moveDateInput.val('');
+                        isValid = false;
+                    }
+                }
             }
             
             return isValid;
