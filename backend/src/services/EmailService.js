@@ -44,6 +44,20 @@ class EmailService {
       console.log('  - Input date:', date);
       console.log('  - Type:', typeof date);
       
+      // Si es un objeto Date, convertirlo a string UTC primero
+      if (date instanceof Date) {
+        console.log('  - Processing as Date object');
+        const utcString = date.toISOString();
+        console.log('  - UTC string:', utcString);
+        const utcDate = moment.utc(utcString);
+        console.log('  - UTC moment:', utcDate.format());
+        const venezuelanDate = utcDate.tz('America/Caracas');
+        console.log('  - Venezuelan moment:', venezuelanDate.format());
+        const formatted = venezuelanDate.format('DD/MM/YYYY [a las] h:mm A');
+        console.log('  - Final formatted:', formatted);
+        return formatted;
+      }
+      
       // Si la fecha viene con información de zona horaria, interpretarla como UTC
       if (typeof date === 'string' && date.includes('T')) {
         console.log('  - Processing as UTC string');
