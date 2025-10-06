@@ -51,22 +51,30 @@ class EmailService {
         console.log('  - UTC string:', utcString);
         
         // Crear fecha UTC y convertir directamente a Venezuela
-        const utcDate = moment.utc(utcString);
-        console.log('  - UTC moment:', utcDate.format());
+        // Usar moment.utc() para interpretar como UTC puro
+        const utcMoment = moment.utc(utcString);
+        console.log('  - UTC moment:', utcMoment.format());
         
         // Convertir a zona horaria venezolana (GMT-4)
-        const venezuelanDate = utcDate.tz('America/Caracas');
-        console.log('  - Venezuelan moment:', venezuelanDate.format());
+        const venezuelanMoment = utcMoment.clone().tz('America/Caracas');
+        console.log('  - Venezuelan moment:', venezuelanMoment.format());
         
-        const formatted = venezuelanDate.format('DD/MM/YYYY [a las] h:mm A');
+        const formatted = venezuelanMoment.format('DD/MM/YYYY [a las] h:mm A');
         console.log('  - Final formatted:', formatted);
         
         // Debug adicional: mostrar la diferencia de horas
-        const utcHour = utcDate.hour();
-        const venezuelanHour = venezuelanDate.hour();
+        const utcHour = utcMoment.hour();
+        const venezuelanHour = venezuelanMoment.hour();
         console.log('  - UTC hour:', utcHour);
         console.log('  - Venezuelan hour:', venezuelanHour);
         console.log('  - Hour difference:', utcHour - venezuelanHour);
+        
+        // Debug adicional: mostrar la fecha actual del sistema
+        const now = new Date();
+        const nowUTC = moment.utc(now);
+        const nowVenezuela = moment.utc(now).tz('America/Caracas');
+        console.log('  - System now UTC:', nowUTC.format());
+        console.log('  - System now Venezuela:', nowVenezuela.format());
         
         return formatted;
       }
