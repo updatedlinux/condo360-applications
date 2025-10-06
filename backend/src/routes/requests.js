@@ -26,7 +26,7 @@ router.get('/', validatePagination);
  *           description: ID del usuario de WordPress
  *         request_type:
  *           type: string
- *           enum: [Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos]
+   *           enum: [Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos, Carta de Residencia]
  *           description: Tipo de solicitud
  *         details:
  *           type: string

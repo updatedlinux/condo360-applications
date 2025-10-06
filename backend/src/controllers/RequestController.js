@@ -161,7 +161,7 @@ class RequestController {
    *         name: type
    *         schema:
    *           type: string
-   *           enum: [Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos]
+   *           enum: [Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos, Carta de Residencia]
    *         description: Filtrar por tipo de solicitud
    *       - in: query
    *         name: page

@@ -217,6 +217,7 @@ class Condo360Solicitudes {
                         <option value="Mudanza - Salida"><?php _e('Mudanza - Salida', 'condo360-solicitudes'); ?></option>
                         <option value="Sugerencias"><?php _e('Sugerencias', 'condo360-solicitudes'); ?></option>
                         <option value="Reclamos"><?php _e('Reclamos', 'condo360-solicitudes'); ?></option>
+                        <option value="Carta de Residencia"><?php _e('Carta de Residencia', 'condo360-solicitudes'); ?></option>
                     </select>
                 </div>
                 
@@ -371,6 +372,7 @@ class Condo360Solicitudes {
                         <option value="Mudanza - Salida"><?php _e('Mudanza - Salida', 'condo360-solicitudes'); ?></option>
                         <option value="Sugerencias"><?php _e('Sugerencias', 'condo360-solicitudes'); ?></option>
                         <option value="Reclamos"><?php _e('Reclamos', 'condo360-solicitudes'); ?></option>
+                        <option value="Carta de Residencia"><?php _e('Carta de Residencia', 'condo360-solicitudes'); ?></option>
                     </select>
                 </div>
             </div>

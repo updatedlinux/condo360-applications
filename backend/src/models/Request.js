@@ -274,9 +274,9 @@ class RequestValidator {
             'number.positive': 'El ID del usuario debe ser positivo',
             'any.required': 'El ID del usuario es requerido'
           }),
-        request_type: Joi.string().valid('Mudanza - Entrada', 'Mudanza - Salida', 'Sugerencias', 'Reclamos').required()
+        request_type: Joi.string().valid('Mudanza - Entrada', 'Mudanza - Salida', 'Sugerencias', 'Reclamos', 'Carta de Residencia').required()
           .messages({
-            'any.only': 'El tipo de solicitud debe ser uno de: Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos',
+            'any.only': 'El tipo de solicitud debe ser uno de: Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos, Carta de Residencia',
             'any.required': 'El tipo de solicitud es requerido'
           }),
         details: Joi.string().min(10).max(2000).required()
@@ -383,9 +383,9 @@ class RequestValidator {
             'number.positive': 'El ID del usuario debe ser positivo',
             'any.required': 'El ID del usuario es requerido'
           }),
-        request_type: Joi.string().valid('Mudanza - Entrada', 'Mudanza - Salida', 'Sugerencias', 'Reclamos').required()
+        request_type: Joi.string().valid('Mudanza - Entrada', 'Mudanza - Salida', 'Sugerencias', 'Reclamos', 'Carta de Residencia').required()
           .messages({
-            'any.only': 'El tipo de solicitud debe ser uno de: Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos',
+            'any.only': 'El tipo de solicitud debe ser uno de: Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos, Carta de Residencia',
             'any.required': 'El tipo de solicitud es requerido'
           }),
         details: Joi.string().min(10).max(2000).required()

@@ -28,7 +28,7 @@
  *                 example: 123
  *               request_type:
  *                 type: string
- *                 enum: [Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos]
+ *                 enum: [Mudanza - Entrada, Mudanza - Salida, Sugerencias, Reclamos, Carta de Residencia]
  *                 description: Tipo de solicitud
  *                 example: "Mudanza - Entrada"
  *               details:
