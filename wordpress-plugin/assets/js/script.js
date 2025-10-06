@@ -56,6 +56,16 @@
             
             // Validación de fecha de mudanza
             $('#move_date').on('change', this.validateMoveDate.bind(this));
+            
+            // Restricción de números para campos de cédula
+            $('#transporter_id_card, #driver_id_card').on('input', function(e) {
+                // Solo permitir números, letras, guiones y puntos
+                const value = e.target.value;
+                const cleanValue = value.replace(/[^0-9A-Za-z\-\.]/g, '');
+                if (value !== cleanValue) {
+                    e.target.value = cleanValue;
+                }
+            });
         },
         
         // Manejar envío del formulario
@@ -90,7 +100,14 @@
                         $('#mudanza-fields').hide();
                         this.loadUserRequests();
                     } else {
-                        this.showMessage('error', response.data.message || 'Error al enviar la solicitud');
+                        // Mostrar mensaje específico del backend
+                        let errorMessage = 'Error al enviar la solicitud';
+                        if (response.data && response.data.details && Array.isArray(response.data.details)) {
+                            errorMessage = response.data.details.join(', ');
+                        } else if (response.data && response.data.message) {
+                            errorMessage = response.data.message;
+                        }
+                        this.showMessage('error', errorMessage);
                     }
                 },
                 error: () => {
