@@ -49,12 +49,25 @@ class EmailService {
         console.log('  - Processing as Date object');
         const utcString = date.toISOString();
         console.log('  - UTC string:', utcString);
+        
+        // Crear fecha UTC y convertir directamente a Venezuela
         const utcDate = moment.utc(utcString);
         console.log('  - UTC moment:', utcDate.format());
+        
+        // Convertir a zona horaria venezolana (GMT-4)
         const venezuelanDate = utcDate.tz('America/Caracas');
         console.log('  - Venezuelan moment:', venezuelanDate.format());
+        
         const formatted = venezuelanDate.format('DD/MM/YYYY [a las] h:mm A');
         console.log('  - Final formatted:', formatted);
+        
+        // Debug adicional: mostrar la diferencia de horas
+        const utcHour = utcDate.hour();
+        const venezuelanHour = venezuelanDate.hour();
+        console.log('  - UTC hour:', utcHour);
+        console.log('  - Venezuelan hour:', venezuelanHour);
+        console.log('  - Hour difference:', utcHour - venezuelanHour);
+        
         return formatted;
       }
       
