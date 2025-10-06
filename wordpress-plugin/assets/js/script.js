@@ -142,9 +142,11 @@
             const today = this.getCurrentVenezuelanDate();
             dateInput.attr('min', today);
             
-            // Configurar fecha máxima (final del año)
-            const year = new Date().getFullYear();
-            dateInput.attr('max', `${year}-12-31`);
+            // Configurar fecha máxima usando configuración del plugin
+            const currentYear = new Date().getFullYear();
+            const maxFutureYears = condo360_ajax.max_future_years || 2; // Valor por defecto: 2 años
+            const maxYear = currentYear + maxFutureYears;
+            dateInput.attr('max', `${maxYear}-12-31`);
             
             // Agregar tooltip informativo
             dateInput.attr('title', 'Seleccione la fecha de mudanza');
@@ -158,7 +160,9 @@
             console.log('DEBUG setupMudanzaCalendar (simplificado):', {
                 min: dateInput.attr('min'),
                 max: dateInput.attr('max'),
-                today: today
+                today: today,
+                maxYear: maxYear,
+                maxFutureYears: maxFutureYears
             });
         },
         

@@ -49,7 +49,8 @@ define('CONDO360_SOLICITUDES_CONFIG', array(
         'require_move_date_validation' => true,
         'only_saturdays_for_moves' => true,
         'require_future_dates' => true,
-        'validate_id_cards' => true
+        'validate_id_cards' => true,
+        'max_future_years' => 2 // Años máximos en el futuro para fechas de mudanza
     ),
     
     // Configuración de permisos
