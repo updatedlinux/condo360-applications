@@ -459,8 +459,8 @@
                 data: params,
                 success: (response) => {
                     if (response.success) {
-                        this.renderAdminRequests(response.data.data);
-                        this.renderPagination(response.data.pagination);
+                        this.renderAdminRequests(response.data);
+                        this.renderPagination(response.pagination);
                     } else {
                         container.html('<tr><td colspan="6" class="message error">Error al cargar solicitudes</td></tr>');
                     }
