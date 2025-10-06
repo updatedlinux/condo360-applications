@@ -189,7 +189,8 @@ class Condo360Solicitudes {
      */
     public function shortcode_form($atts) {
         $atts = shortcode_atts(array(
-            'show_history' => 'true'
+            'show_history' => 'true',
+            'per_page' => '20'
         ), $atts);
         
         if (!is_user_logged_in()) {
@@ -314,6 +315,15 @@ class Condo360Solicitudes {
             </div>
             <?php endif; ?>
         </div>
+        
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Configurar per_page para el formulario de usuario
+            if (typeof condo360_ajax !== 'undefined') {
+                condo360_ajax.per_page = <?php echo intval($atts['per_page']); ?>;
+            }
+        });
+        </script>
         <?php
         return ob_get_clean();
     }
