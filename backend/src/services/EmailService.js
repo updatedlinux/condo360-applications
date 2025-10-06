@@ -34,10 +34,48 @@ class EmailService {
   }
 
   /**
-   * Formatear fecha correctamente para correos (GMT-4 Venezuela)
+   * Formatear fecha usando JavaScript nativo (más confiable)
    * @param {string|Date} date - Fecha a formatear
    * @returns {string} - Fecha formateada correctamente
    */
+  formatDateNative(date) {
+    try {
+      console.log('🔍 DEBUG formatDateNative:');
+      console.log('  - Input date:', date);
+      
+      // Convertir a objeto Date si es necesario
+      let dateObj;
+      if (date instanceof Date) {
+        dateObj = date;
+      } else {
+        dateObj = new Date(date);
+      }
+      
+      console.log('  - Date object:', dateObj);
+      console.log('  - Date ISO:', dateObj.toISOString());
+      
+      // Crear fecha en zona horaria venezolana usando Intl.DateTimeFormat
+      const venezuelanDate = new Date(dateObj.toLocaleString("en-US", {timeZone: "America/Caracas"}));
+      console.log('  - Venezuelan Date:', venezuelanDate);
+      
+      // Formatear manualmente
+      const day = venezuelanDate.getDate().toString().padStart(2, '0');
+      const month = (venezuelanDate.getMonth() + 1).toString().padStart(2, '0');
+      const year = venezuelanDate.getFullYear();
+      const hours = venezuelanDate.getHours();
+      const minutes = venezuelanDate.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+      
+      const formatted = `${day}/${month}/${year} a las ${displayHours}:${minutes} ${ampm}`;
+      console.log('  - Native formatted:', formatted);
+      
+      return formatted;
+    } catch (error) {
+      console.error('Error en formatDateNative:', error);
+      return date;
+    }
+  }
   formatDateForEmail(date) {
     try {
       console.log('🔍 DEBUG formatDateForEmail:');
@@ -266,7 +304,7 @@ class EmailService {
    */
   async sendRequestConfirmation(request, user) {
     try {
-      const formattedDate = this.formatDateForEmail(request.created_at);
+      const formattedDate = this.formatDateNative(request.created_at);
       
       let mudanzaDetails = '';
       if (request.request_type.includes('Mudanza')) {
@@ -357,7 +395,7 @@ class EmailService {
    */
   async sendRequestResponse(request, user) {
     try {
-      const formattedDate = this.formatDateForEmail(request.updated_at);
+      const formattedDate = this.formatDateNative(request.updated_at);
       
       let statusColor = this.secondaryColor;
       let statusText = request.status;
