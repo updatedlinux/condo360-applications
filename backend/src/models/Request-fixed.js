@@ -1,3 +1,6 @@
+// Versión alternativa del modelo Request con corrección para MySQL
+// Este archivo reemplaza temporalmente el modelo original para resolver el problema de MySQL
+
 const Joi = require('joi');
 const moment = require('moment-timezone');
 
@@ -5,7 +8,7 @@ const moment = require('moment-timezone');
 moment.tz.setDefault('America/Caracas');
 
 /**
- * Modelo para las solicitudes de Condominio360
+ * Modelo para las solicitudes de Condominio360 - Versión Corregida
  */
 class RequestModel {
   constructor(db) {
@@ -77,58 +80,63 @@ class RequestModel {
    * @returns {number} - Entero válido
    */
   safeParseInt(value, defaultValue = 0) {
+    if (value === null || value === undefined) {
+      return defaultValue;
+    }
     const parsed = parseInt(value, 10);
     return isNaN(parsed) ? defaultValue : parsed;
   }
 
   /**
-   * Buscar solicitudes por usuario
+   * Buscar solicitudes por usuario - VERSIÓN CORREGIDA
    * @param {number} wp_user_id - ID del usuario de WordPress
    * @param {number} limit - Límite de resultados
    * @param {number} offset - Offset para paginación
    * @returns {Promise<Array>} - Lista de solicitudes
    */
   async findByUserId(wp_user_id, limit = 20, offset = 0) {
+    // Convertir parámetros a enteros de forma segura
+    const limitInt = this.safeParseInt(limit, 20);
+    const offsetInt = this.safeParseInt(offset, 0);
+    
+    console.log(`DEBUG findByUserId: wp_user_id=${wp_user_id}, limit=${limit}->${limitInt}, offset=${offset}->${offsetInt}`);
+    
+    // Usar query() en lugar de execute() para evitar problemas con parámetros
     const sql = `
       SELECT r.*, u.display_name, u.user_email, u.user_nicename
       FROM condo360solicitudes_requests r
       LEFT JOIN wp_users u ON r.wp_user_id = u.ID
       WHERE r.wp_user_id = ?
       ORDER BY r.created_at DESC
-      LIMIT ? OFFSET ?
+      LIMIT ${limitInt} OFFSET ${offsetInt}
     `;
     
-    // Convertir a enteros de forma segura
-    const limitInt = this.safeParseInt(limit, 20);
-    const offsetInt = this.safeParseInt(offset, 0);
-    
-    console.log(`DEBUG findByUserId: wp_user_id=${wp_user_id}, limit=${limit}->${limitInt}, offset=${offset}->${offsetInt}`);
-    
-    return await this.db.query(sql, [wp_user_id, limitInt, offsetInt]);
+    return await this.db.query(sql, [wp_user_id]);
   }
 
   /**
-   * Obtener todas las solicitudes (para administradores)
+   * Obtener todas las solicitudes (para administradores) - VERSIÓN CORREGIDA
    * @param {number} limit - Límite de resultados
    * @param {number} offset - Offset para paginación
    * @returns {Promise<Array>} - Lista de solicitudes
    */
   async findAll(limit = 20, offset = 0) {
-    const sql = `
-      SELECT r.*, u.display_name, u.user_email, u.user_nicename
-      FROM condo360solicitudes_requests r
-      LEFT JOIN wp_users u ON r.wp_user_id = u.ID
-      ORDER BY r.created_at DESC
-      LIMIT ? OFFSET ?
-    `;
-    
-    // Convertir a enteros de forma segura
+    // Convertir parámetros a enteros de forma segura
     const limitInt = this.safeParseInt(limit, 20);
     const offsetInt = this.safeParseInt(offset, 0);
     
     console.log(`DEBUG findAll: limit=${limit}->${limitInt}, offset=${offset}->${offsetInt}`);
     
-    return await this.db.query(sql, [limitInt, offsetInt]);
+    // Usar query() en lugar de execute() para evitar problemas con parámetros
+    const sql = `
+      SELECT r.*, u.display_name, u.user_email, u.user_nicename
+      FROM condo360solicitudes_requests r
+      LEFT JOIN wp_users u ON r.wp_user_id = u.ID
+      ORDER BY r.created_at DESC
+      LIMIT ${limitInt} OFFSET ${offsetInt}
+    `;
+    
+    return await this.db.query(sql);
   }
 
   /**
