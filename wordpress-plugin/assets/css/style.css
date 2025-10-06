@@ -686,3 +686,109 @@
     font-size: 12px;
     margin-top: 5px;
 }
+
+/* Modal de confirmación */
+.confirmation-message {
+    text-align: center;
+    padding: 20px;
+}
+
+.confirmation-message .success-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.confirmation-message h4 {
+    color: var(--condo360-success);
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+}
+
+.timeframe-info {
+    background: var(--condo360-primary-light);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    border-left: 4px solid var(--condo360-primary);
+}
+
+.details-info {
+    margin: 15px 0;
+    color: var(--condo360-gray-600);
+    line-height: 1.6;
+}
+
+.next-steps {
+    text-align: left;
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--condo360-gray-50);
+    border-radius: 8px;
+}
+
+.next-steps h5 {
+    color: var(--condo360-primary);
+    margin-bottom: 10px;
+}
+
+.next-steps ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.next-steps li {
+    margin-bottom: 8px;
+    color: var(--condo360-gray-600);
+}
+
+/* Mejoras para el calendario de mudanzas */
+#move_date {
+    background: #ffffff;
+    border: 2px solid var(--condo360-gray-300);
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+#move_date:focus {
+    border-color: var(--condo360-primary);
+    box-shadow: 0 0 0 3px var(--condo360-primary-light);
+    outline: none;
+}
+
+#move_date:invalid {
+    border-color: var(--condo360-error);
+}
+
+/* Tooltip para el calendario */
+#move_date[title] {
+    position: relative;
+}
+
+#move_date[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--condo360-gray-800);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+#move_date[title]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--condo360-gray-800);
+    z-index: 1000;
+}

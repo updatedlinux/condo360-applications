@@ -42,13 +42,24 @@ class RequestModel {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Recibida', NOW(), NOW())
     `;
 
+    // Convertir undefined a null para campos opcionales
     const params = [
-      wp_user_id, request_type, details, move_date,
-      transporter_name, transporter_id_card, vehicle_brand,
-      vehicle_model, vehicle_plate, vehicle_color,
-      driver_name, driver_id_card
+      wp_user_id, 
+      request_type, 
+      details, 
+      move_date || null,
+      transporter_name || null, 
+      transporter_id_card || null, 
+      vehicle_brand || null,
+      vehicle_model || null, 
+      vehicle_plate || null, 
+      vehicle_color || null,
+      driver_name || null, 
+      driver_id_card || null
     ];
 
+    console.log(`DEBUG create: request_type=${request_type}, params count=${params.length}`);
+    
     const result = await this.db.query(sql, params);
     return await this.findById(result.insertId);
   }

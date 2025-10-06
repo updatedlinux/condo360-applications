@@ -84,7 +84,8 @@
                 },
                 success: (response) => {
                     if (response.success) {
-                        this.showMessage('success', 'Solicitud enviada exitosamente');
+                        // Mostrar modal de confirmación con detalles
+                        this.showConfirmationModal(response.data.confirmation);
                         form[0].reset();
                         $('#mudanza-fields').hide();
                         this.loadUserRequests();
@@ -109,10 +110,109 @@
             if (requestType.includes('Mudanza')) {
                 mudanzaFields.show();
                 mudanzaFields.find('input, select').prop('required', true);
+                this.setupMudanzaCalendar();
             } else {
                 mudanzaFields.hide();
                 mudanzaFields.find('input, select').prop('required', false);
             }
+        },
+        
+        // Configurar calendario para mudanzas (solo sábados)
+        setupMudanzaCalendar: function() {
+            const dateInput = $('#move_date');
+            
+            // Configurar atributos del input de fecha
+            dateInput.attr('min', this.getNextSaturday());
+            dateInput.attr('max', this.getLastSaturdayOfYear());
+            
+            // Agregar evento para validar fechas
+            dateInput.on('change', this.validateMoveDate.bind(this));
+            
+            // Agregar tooltip informativo
+            dateInput.attr('title', 'Solo se permiten sábados para mudanzas');
+        },
+        
+        // Obtener el próximo sábado
+        getNextSaturday: function() {
+            const today = new Date();
+            const venezuelanTime = new Date(today.getTime() - (4 * 60 * 60 * 1000));
+            
+            // Encontrar el próximo sábado
+            let nextSaturday = new Date(venezuelanTime);
+            const daysUntilSaturday = (6 - venezuelanTime.getDay()) % 7;
+            
+            if (daysUntilSaturday === 0 && venezuelanTime.getHours() >= 18) {
+                // Si es sábado después de las 6 PM, usar el siguiente sábado
+                nextSaturday.setDate(venezuelanTime.getDate() + 7);
+            } else {
+                nextSaturday.setDate(venezuelanTime.getDate() + daysUntilSaturday);
+            }
+            
+            return nextSaturday.toISOString().split('T')[0];
+        },
+        
+        // Obtener el último sábado del año
+        getLastSaturdayOfYear: function() {
+            const year = new Date().getFullYear();
+            const lastDay = new Date(year, 11, 31); // 31 de diciembre
+            const lastSaturday = new Date(lastDay);
+            
+            // Retroceder hasta encontrar el último sábado del año
+            while (lastSaturday.getDay() !== 6) {
+                lastSaturday.setDate(lastSaturday.getDate() - 1);
+            }
+            
+            return lastSaturday.toISOString().split('T')[0];
+        },
+        
+        // Mostrar modal de confirmación
+        showConfirmationModal: function(confirmation) {
+            const modalHtml = `
+                <div id="confirmation-modal" class="condo360-modal" style="display: block;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>✅ Solicitud Enviada Exitosamente</h3>
+                            <span class="modal-close">&times;</span>
+                        </div>
+                        <div class="modal-body">
+                            <div class="confirmation-message">
+                                <div class="success-icon">🎉</div>
+                                <h4>${confirmation.message}</h4>
+                                <div class="timeframe-info">
+                                    <strong>⏰ Tiempo de respuesta:</strong> ${confirmation.timeframe}
+                                </div>
+                                <div class="details-info">
+                                    <p>${confirmation.details}</p>
+                                </div>
+                                <div class="next-steps">
+                                    <h5>Próximos pasos:</h5>
+                                    <ul>
+                                        <li>Recibirá un correo de confirmación en breve</li>
+                                        <li>La administración revisará su solicitud</li>
+                                        <li>Se le notificará la respuesta por correo</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary modal-close">Entendido</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal anterior si existe
+            $('#confirmation-modal').remove();
+            
+            // Agregar nuevo modal
+            $('body').append(modalHtml);
+            
+            // Auto-cerrar después de 10 segundos
+            setTimeout(() => {
+                $('#confirmation-modal').fadeOut(500, function() {
+                    $(this).remove();
+                });
+            }, 10000);
         },
         
         // Validar fecha de mudanza (solo sábados en zona horaria venezolana)

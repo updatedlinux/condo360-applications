@@ -126,8 +126,13 @@ class RequestController {
 
       res.status(201).json({
         success: true,
-        message: 'Solicitud creada exitosamente',
-        data: request
+        message: 'Solicitud creada exitosamente. Será atendida en un lapso de 24 horas hábiles.',
+        data: request,
+        confirmation: {
+          message: 'Su solicitud ha sido recibida correctamente',
+          timeframe: '24 horas hábiles',
+          details: 'La administración revisará su solicitud y le enviará una respuesta por correo electrónico'
+        }
       });
     } catch (error) {
       next(error);
