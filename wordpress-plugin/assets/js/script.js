@@ -30,6 +30,10 @@
             this.loadUserRequests();
             this.loadAdminData();
             
+            // Vincular eventos a modales existentes en el HTML
+            this.bindModalEvents('#request-modal');
+            this.bindModalEvents('#response-modal');
+            
             // Agregar botón de prueba temporal para debug
             if (window.location.href.includes('debug')) {
                 $('body').append(`
@@ -84,10 +88,31 @@
             
             // Modales - Cerrar con botones (delegación específica)
             $(document).on('click', '.modal-close', function(e) {
-                console.log('DEBUG: Botón de cerrar modal clickeado');
+                console.log('DEBUG: Botón de cerrar modal clickeado', e.target);
                 e.preventDefault();
                 e.stopPropagation();
                 Condo360Solicitudes.closeModal();
+            });
+            
+            // Alternativa: Evento directo en botones de cerrar
+            $(document).on('click', 'span.modal-close, button.modal-close', function(e) {
+                console.log('DEBUG: Botón de cerrar alternativo clickeado', e.target);
+                e.preventDefault();
+                e.stopPropagation();
+                Condo360Solicitudes.closeModal();
+            });
+            
+            // Evento más amplio para capturar cualquier clic en elementos de cierre
+            $(document).on('click', function(e) {
+                if ($(e.target).hasClass('modal-close') || 
+                    $(e.target).closest('.modal-close').length > 0 ||
+                    e.target.textContent === '×' ||
+                    e.target.textContent === 'Cerrar') {
+                    console.log('DEBUG: Evento de cierre capturado por delegación amplia', e.target);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    Condo360Solicitudes.closeModal();
+                }
             });
             
             // Modales - Cerrar con clic fuera
@@ -319,6 +344,29 @@
                     $(this).remove();
                 });
             }, 10000);
+            
+            // Vincular eventos específicos al modal recién creado
+            this.bindModalEvents('#confirmation-modal');
+        },
+        
+        // Vincular eventos específicos a un modal
+        bindModalEvents: function(modalId) {
+            console.log('DEBUG bindModalEvents: Vinculando eventos a', modalId);
+            
+            $(modalId).find('.modal-close').off('click.modalClose').on('click.modalClose', function(e) {
+                console.log('DEBUG bindModalEvents: Botón de cerrar clickeado en', modalId);
+                e.preventDefault();
+                e.stopPropagation();
+                Condo360Solicitudes.closeModal();
+            });
+            
+            // También vincular al botón "Entendido" si existe
+            $(modalId).find('button.modal-close').off('click.modalClose').on('click.modalClose', function(e) {
+                console.log('DEBUG bindModalEvents: Botón "Entendido" clickeado en', modalId);
+                e.preventDefault();
+                e.stopPropagation();
+                Condo360Solicitudes.closeModal();
+            });
         },
         
         // Validar fecha de mudanza (simplificado - solo fecha futura)
