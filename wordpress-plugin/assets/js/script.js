@@ -43,12 +43,23 @@
             $(document).on('click', '.respond-request', this.handleRespondRequest.bind(this));
             $('#response-form').on('submit', this.handleResponseSubmit.bind(this));
             
-            // Modales
-            $(document).on('click', '.modal-close', this.closeModal.bind(this));
+            // Modales - Cerrar con botones
+            $(document).on('click', '.modal-close', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                Condo360Solicitudes.closeModal();
+            });
+            
+            // Modales - Cerrar con clic fuera
             $(document).on('click', '.condo360-modal', function(e) {
                 if (e.target === this) {
                     Condo360Solicitudes.closeModal();
                 }
+            });
+            
+            // Prevenir cierre al hacer clic dentro del modal
+            $(document).on('click', '.modal-content', function(e) {
+                e.stopPropagation();
             });
             
             // Paginación
@@ -56,16 +67,6 @@
             
             // Validación de fecha de mudanza
             $('#move_date').on('change', this.validateMoveDateSimple.bind(this));
-            
-            // Restricción de números para campos de cédula
-            $('#transporter_id_card, #driver_id_card').on('input', function(e) {
-                // Solo permitir números
-                const value = e.target.value;
-                const cleanValue = value.replace(/[^0-9]/g, '');
-                if (value !== cleanValue) {
-                    e.target.value = cleanValue;
-                }
-            });
         },
         
         // Manejar envío del formulario
@@ -128,10 +129,30 @@
                 mudanzaFields.show();
                 mudanzaFields.find('input, select').prop('required', true);
                 this.setupMudanzaCalendar();
+                this.setupIdCardValidation(); // Aplicar validación de cédulas
             } else {
                 mudanzaFields.hide();
                 mudanzaFields.find('input, select').prop('required', false);
             }
+        },
+        
+        // Configurar validación de cédulas (solo números)
+        setupIdCardValidation: function() {
+            // Remover eventos anteriores para evitar duplicados
+            $('#transporter_id_card, #driver_id_card').off('input.idCardValidation');
+            
+            // Aplicar validación solo a números
+            $('#transporter_id_card, #driver_id_card').on('input.idCardValidation', function(e) {
+                const value = e.target.value;
+                const cleanValue = value.replace(/[^0-9]/g, '');
+                if (value !== cleanValue) {
+                    e.target.value = cleanValue;
+                    // Mostrar mensaje temporal
+                    Condo360Solicitudes.showMessage('warning', 'Solo se permiten números en el campo de cédula');
+                }
+            });
+            
+            console.log('DEBUG setupIdCardValidation: Validación aplicada a campos de cédula');
         },
         
         // Configurar calendario para mudanzas (simplificado)
