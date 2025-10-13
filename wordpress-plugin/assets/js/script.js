@@ -29,6 +29,45 @@
             this.initFormValidation();
             this.loadUserRequests();
             this.loadAdminData();
+            
+            // Agregar botón de prueba temporal para debug
+            if (window.location.href.includes('debug')) {
+                $('body').append(`
+                    <div style="position: fixed; top: 10px; right: 10px; z-index: 99999; background: red; color: white; padding: 10px;">
+                        <button onclick="Condo360Solicitudes.testModal()">Test Modal</button>
+                        <button onclick="Condo360Solicitudes.closeModal()">Close Modal</button>
+                    </div>
+                `);
+            }
+        },
+        
+        // Método de prueba para modal
+        testModal: function() {
+            console.log('DEBUG testModal: Creando modal de prueba');
+            const testModalHtml = `
+                <div id="test-modal" class="condo360-modal" style="display: block;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Modal de Prueba</h3>
+                            <span class="modal-close">&times;</span>
+                        </div>
+                        <div class="modal-body">
+                            <p>Este es un modal de prueba. Debería cerrarse con:</p>
+                            <ul>
+                                <li>Botón X</li>
+                                <li>Clic fuera del modal</li>
+                                <li>Tecla Escape</li>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary modal-close">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#test-modal').remove();
+            $('body').append(testModalHtml);
         },
         
         // Vincular eventos
@@ -43,8 +82,9 @@
             $(document).on('click', '.respond-request', this.handleRespondRequest.bind(this));
             $('#response-form').on('submit', this.handleResponseSubmit.bind(this));
             
-            // Modales - Cerrar con botones
+            // Modales - Cerrar con botones (delegación específica)
             $(document).on('click', '.modal-close', function(e) {
+                console.log('DEBUG: Botón de cerrar modal clickeado');
                 e.preventDefault();
                 e.stopPropagation();
                 Condo360Solicitudes.closeModal();
@@ -52,14 +92,25 @@
             
             // Modales - Cerrar con clic fuera
             $(document).on('click', '.condo360-modal', function(e) {
+                console.log('DEBUG: Clic en modal, target:', e.target, 'this:', this);
                 if (e.target === this) {
+                    console.log('DEBUG: Cerrando modal por clic fuera');
                     Condo360Solicitudes.closeModal();
                 }
             });
             
             // Prevenir cierre al hacer clic dentro del modal
             $(document).on('click', '.modal-content', function(e) {
+                console.log('DEBUG: Clic dentro del modal, previniendo cierre');
                 e.stopPropagation();
+            });
+            
+            // Cerrar modal con tecla Escape
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Escape' && $('.condo360-modal:visible').length > 0) {
+                    console.log('DEBUG: Cerrando modal con tecla Escape');
+                    Condo360Solicitudes.closeModal();
+                }
             });
             
             // Paginación
@@ -788,7 +839,16 @@
         
         // Cerrar modal
         closeModal: function() {
-            $('.condo360-modal').hide();
+            console.log('DEBUG closeModal: Cerrando todos los modales');
+            $('.condo360-modal').each(function() {
+                console.log('DEBUG closeModal: Cerrando modal:', this.id || 'sin-id');
+                $(this).hide();
+            });
+            
+            // También cerrar modales específicos por ID
+            $('#request-modal, #response-modal, #confirmation-modal').hide();
+            
+            console.log('DEBUG closeModal: Modales cerrados');
         },
         
         // Serializar formulario
