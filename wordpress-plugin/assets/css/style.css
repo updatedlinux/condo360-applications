@@ -577,6 +577,54 @@
     to { transform: rotate(360deg); }
 }
 
+/* Contador de caracteres para respuesta */
+.character-counter {
+    margin-top: 5px;
+    font-size: 12px;
+    text-align: right;
+}
+
+.counter-text {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.counter-text.valid {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.counter-text.invalid {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Mejoras en modales */
+.condo360-modal .modal-close {
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--condo360-gray-500);
+    transition: color 0.2s ease;
+}
+
+.condo360-modal .modal-close:hover {
+    color: var(--condo360-gray-700);
+}
+
+/* Botones de cerrar modal */
+.modal-close {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.modal-close:hover {
+    opacity: 0.7;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .condo360-solicitudes-form,

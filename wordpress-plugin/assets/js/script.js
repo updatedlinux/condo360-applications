@@ -59,9 +59,9 @@
             
             // Restricción de números para campos de cédula
             $('#transporter_id_card, #driver_id_card').on('input', function(e) {
-                // Solo permitir números, letras, guiones y puntos
+                // Solo permitir números
                 const value = e.target.value;
-                const cleanValue = value.replace(/[^0-9A-Za-z\-\.]/g, '');
+                const cleanValue = value.replace(/[^0-9]/g, '');
                 if (value !== cleanValue) {
                     e.target.value = cleanValue;
                 }
@@ -672,6 +672,9 @@
             $('#response-request-id').val(request.id);
             $('#response-text').val('');
             
+            // Agregar contador de caracteres
+            this.setupResponseTextCounter();
+            
             modal.show();
         },
         
@@ -689,6 +692,13 @@
             };
             
             console.log('DEBUG handleResponseSubmit: formData=', formData);
+            
+            // Validar longitud mínima de respuesta
+            if (formData.response.length < 10) {
+                this.showMessage('error', 'La respuesta debe tener al menos 10 caracteres');
+                $('#response-text').focus();
+                return;
+            }
             
             this.setLoading(form.find('button[type="submit"]'), true);
             
@@ -721,6 +731,38 @@
                     this.setLoading(form.find('button[type="submit"]'), false);
                 }
             });
+        },
+        
+        // Configurar contador de caracteres para respuesta
+        setupResponseTextCounter: function() {
+            const textarea = $('#response-text');
+            const formGroup = textarea.closest('.form-group');
+            
+            // Remover contador anterior si existe
+            formGroup.find('.character-counter').remove();
+            
+            // Crear contador
+            const counter = $('<div class="character-counter"></div>');
+            formGroup.append(counter);
+            
+            // Función para actualizar contador
+            const updateCounter = () => {
+                const length = textarea.val().length;
+                const minLength = 10;
+                const isValid = length >= minLength;
+                
+                counter.html(`
+                    <span class="counter-text ${isValid ? 'valid' : 'invalid'}">
+                        ${length}/${minLength} caracteres mínimos
+                    </span>
+                `);
+            };
+            
+            // Actualizar en tiempo real
+            textarea.on('input keyup paste', updateCounter);
+            
+            // Actualizar inicialmente
+            updateCounter();
         },
         
         // Cerrar modal
