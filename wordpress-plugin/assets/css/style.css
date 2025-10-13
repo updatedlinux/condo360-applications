@@ -625,6 +625,19 @@
     opacity: 0.7;
 }
 
+/* Botón "Cerrar" en modal de detalles */
+.modal-footer .btn-secondary {
+    background: var(--condo360-gray-500);
+    color: #ffffff;
+    border: 1px solid var(--condo360-gray-500);
+}
+
+.modal-footer .btn-secondary:hover {
+    background: var(--condo360-gray-600);
+    color: #ffffff;
+    border-color: var(--condo360-gray-600);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .condo360-solicitudes-form,
