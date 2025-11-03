@@ -615,8 +615,11 @@
             
             let html = '';
             requests.forEach(request => {
+                console.log('DEBUG renderAdminRequests: request.id=' + request.id + ', created_at=' + request.created_at + ', created_at_formatted=' + request.created_at_formatted);
+                
                 // Usar campo _formatted si existe, sino formatear
                 const formattedDate = request.created_at_formatted || this.formatVenezuelanDateShort(request.created_at);
+                console.log('DEBUG renderAdminRequests: formattedDate=' + formattedDate);
                 const statusClass = request.status.toLowerCase();
                 
                 html += `
@@ -705,7 +708,9 @@
                 url: this.config.apiUrl + '/requests/' + requestId,
                 type: 'GET',
                 success: (response) => {
+                    console.log('DEBUG handleViewRequest: response=', response);
                     if (response.success) {
+                        console.log('DEBUG handleViewRequest: response.data=', response.data);
                         this.showRequestModal(response.data);
                     }
                 }
@@ -717,13 +722,34 @@
             const modal = $('#request-modal');
             const body = $('#modal-body');
             
-            // Usar campo _formatted si existe, sino formatear
-            const formattedDate = request.created_at_formatted || this.formatVenezuelanDate(request.created_at);
+            console.log('DEBUG showRequestModal: request.created_at=', request.created_at);
+            console.log('DEBUG showRequestModal: request.created_at_formatted=', request.created_at_formatted);
+            
+            // SIEMPRE usar campo _formatted si existe (backend ya lo formateó correctamente)
+            // Solo usar fallback si realmente no existe
+            let formattedDate;
+            if (request.created_at_formatted) {
+                formattedDate = request.created_at_formatted;
+                console.log('DEBUG showRequestModal: Usando created_at_formatted del backend:', formattedDate);
+            } else {
+                formattedDate = this.formatVenezuelanDate(request.created_at);
+                console.log('DEBUG showRequestModal: Fallback a formatVenezuelanDate:', formattedDate);
+            }
             
             let mudanzaInfo = '';
             if (request.request_type.includes('Mudanza')) {
-                // Usar campo _formatted si existe, sino formatear
-                const moveDateFormatted = request.move_date_formatted || this.formatVenezuelanDateOnly(request.move_date);
+                console.log('DEBUG showRequestModal: request.move_date=', request.move_date);
+                console.log('DEBUG showRequestModal: request.move_date_formatted=', request.move_date_formatted);
+                
+                // SIEMPRE usar campo _formatted si existe
+                let moveDateFormatted;
+                if (request.move_date_formatted) {
+                    moveDateFormatted = request.move_date_formatted;
+                    console.log('DEBUG showRequestModal: Usando move_date_formatted del backend:', moveDateFormatted);
+                } else {
+                    moveDateFormatted = this.formatVenezuelanDateOnly(request.move_date);
+                    console.log('DEBUG showRequestModal: Fallback a formatVenezuelanDateOnly:', moveDateFormatted);
+                }
                 mudanzaInfo = `
                     <div class="mudanza-info">
                         <h4>Información de la Mudanza</h4>
@@ -966,20 +992,28 @@
         },
         
         // Formatear fecha en zona horaria venezolana (GMT-4)
+        // NOTA: Esta función solo se usa como fallback si _formatted no está disponible
+        // El backend ya envía fechas correctamente formateadas en GMT-4
         formatVenezuelanDate: function(dateString) {
             if (!dateString) return '';
             
+            // Si ya viene formateado (contiene "a las"), retornarlo como está
+            if (typeof dateString === 'string' && dateString.includes('a las')) {
+                return dateString;
+            }
+            
+            // Si es un string en formato ISO, parsearlo correctamente
+            // El backend envía fechas en formato ISO que ya están en GMT-4
             const date = new Date(dateString);
             
-            // Ajustar a GMT-4 (Venezuela)
-            const venezuelanTime = new Date(date.getTime() - (4 * 60 * 60 * 1000));
+            // El backend ya ajustó a GMT-4, así que usar los componentes de la fecha directamente
+            // Sin restar horas adicionales
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
             
-            const day = venezuelanTime.getDate().toString().padStart(2, '0');
-            const month = (venezuelanTime.getMonth() + 1).toString().padStart(2, '0');
-            const year = venezuelanTime.getFullYear();
-            
-            let hours = venezuelanTime.getHours();
-            const minutes = venezuelanTime.getMinutes().toString().padStart(2, '0');
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
             const ampm = hours >= 12 ? 'PM' : 'AM';
             
             hours = hours % 12;
@@ -990,32 +1024,47 @@
         },
         
         // Formatear solo fecha (sin hora)
+        // NOTA: Esta función solo se usa como fallback si _formatted no está disponible
         formatVenezuelanDateOnly: function(dateString) {
             if (!dateString) return '';
             
-            const date = new Date(dateString);
-            const venezuelanTime = new Date(date.getTime() - (4 * 60 * 60 * 1000));
+            // Si ya viene formateado (formato DD/MM/YYYY), retornarlo como está
+            if (typeof dateString === 'string' && dateString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                return dateString;
+            }
             
-            const day = venezuelanTime.getDate().toString().padStart(2, '0');
-            const month = (venezuelanTime.getMonth() + 1).toString().padStart(2, '0');
-            const year = venezuelanTime.getFullYear();
+            // Si es un string en formato ISO o Date, parsearlo
+            // Para move_date, el backend envía "YYYY-MM-DD" que se parsea como medianoche local
+            const date = new Date(dateString);
+            
+            // Usar componentes locales directamente (el backend ya ajustó a GMT-4)
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
             
             return `${day}/${month}/${year}`;
         },
         
         // Formatear fecha para mostrar en listas (más compacto)
+        // NOTA: Esta función solo se usa como fallback si _formatted no está disponible
         formatVenezuelanDateShort: function(dateString) {
             if (!dateString) return '';
             
+            // Si ya viene formateado, retornarlo como está
+            if (typeof dateString === 'string' && (dateString.includes('a las') || dateString.includes('/'))) {
+                return dateString;
+            }
+            
+            // Si es un string en formato ISO, parsearlo correctamente
             const date = new Date(dateString);
-            const venezuelanTime = new Date(date.getTime() - (4 * 60 * 60 * 1000));
             
-            const day = venezuelanTime.getDate().toString().padStart(2, '0');
-            const month = (venezuelanTime.getMonth() + 1).toString().padStart(2, '0');
-            const year = venezuelanTime.getFullYear();
+            // Usar componentes locales directamente (el backend ya ajustó a GMT-4)
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
             
-            let hours = venezuelanTime.getHours();
-            const minutes = venezuelanTime.getMinutes().toString().padStart(2, '0');
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
             const ampm = hours >= 12 ? 'PM' : 'AM';
             
             hours = hours % 12;
