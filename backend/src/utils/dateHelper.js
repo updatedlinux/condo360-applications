@@ -110,18 +110,35 @@ class DateHelper {
 
   /**
    * Parsear fecha desde string YYYY-MM-DD y asegurar que esté en GMT-4
-   * @param {string} dateString - String de fecha YYYY-MM-DD
+   * @param {string|Date|moment.Moment} dateString - String de fecha YYYY-MM-DD o Date object
    * @returns {moment.Moment} - Moment en GMT-4
    */
   static parseDateString(dateString) {
     if (!dateString) return null;
     
-    // Si viene como "YYYY-MM-DD", interpretar como medianoche en GMT-4
+    // Si viene como string "YYYY-MM-DD", interpretar como medianoche en GMT-4
     if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return moment.tz(dateString, TIMEZONE).startOf('day');
+      // Parsear directamente como fecha local en GMT-4 (sin conversión UTC)
+      const [year, month, day] = dateString.split('-');
+      return moment.tz({
+        year: parseInt(year, 10),
+        month: parseInt(month, 10) - 1, // moment usa 0-11 para meses
+        day: parseInt(day, 10)
+      }, TIMEZONE).startOf('day');
     }
     
-    return moment.tz(dateString, TIMEZONE);
+    // Si viene como Date object, extraer componentes locales
+    if (dateString instanceof Date) {
+      // Crear moment directamente en GMT-4 usando los componentes de fecha
+      return moment.tz({
+        year: dateString.getFullYear(),
+        month: dateString.getMonth(),
+        day: dateString.getDate()
+      }, TIMEZONE).startOf('day');
+    }
+    
+    // Para otros formatos, usar moment normal
+    return moment.tz(dateString, TIMEZONE).startOf('day');
   }
 }
 

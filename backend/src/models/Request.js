@@ -336,17 +336,25 @@ class RequestValidator {
             'string.max': 'Los detalles no pueden exceder 2000 caracteres',
             'any.required': 'Los detalles son requeridos'
           }),
-        move_date: Joi.date().iso().required()
+        move_date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required()
           .custom((value, helpers) => {
+            console.log(`DEBUG validateCreate move_date: value=${value}, type=${typeof value}`);
+            
             // Usar DateHelper para validar en GMT-4
+            // value ya es string "YYYY-MM-DD" porque usamos Joi.string()
             const parsedDate = DateHelper.parseDateString(value);
+            
+            console.log(`DEBUG validateCreate move_date: parsedDate=${parsedDate ? parsedDate.format('YYYY-MM-DD dddd') : 'null'}, isValid=${parsedDate ? parsedDate.isValid() : false}`);
             
             if (!parsedDate || !parsedDate.isValid()) {
               return helpers.error('date.base');
             }
             
             // Verificar que sea sábado en GMT-4
-            if (!DateHelper.isSaturday(parsedDate)) {
+            const dayOfWeek = parsedDate.day();
+            console.log(`DEBUG validateCreate move_date: dayOfWeek=${dayOfWeek} (6=sábado)`);
+            
+            if (dayOfWeek !== 6) {
               return helpers.error('custom.saturday');
             }
             
