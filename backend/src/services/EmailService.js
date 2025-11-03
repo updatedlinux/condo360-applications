@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 const moment = require('moment-timezone');
-const { formatDateReadable } = require('../middleware/dateFormatter');
+const DateHelper = require('../utils/dateHelper');
 require('dotenv').config();
 
 // Configurar zona horaria para GMT-4
@@ -33,39 +33,6 @@ class EmailService {
     this.siteUrl = process.env.WORDPRESS_URL || 'https://bonaventurecclub.com';
   }
 
-  /**
-   * Formatear fecha restando 4 horas manualmente (GMT-4 Venezuela)
-   * @param {string|Date} date - Fecha a formatear
-   * @returns {string} - Fecha formateada correctamente
-   */
-  formatDateManual(date) {
-    try {
-      // Convertir a objeto Date si es necesario
-      let dateObj;
-      if (date instanceof Date) {
-        dateObj = date;
-      } else {
-        dateObj = new Date(date);
-      }
-      
-      // Restar 4 horas manualmente (GMT-4)
-      const venezuelanTime = new Date(dateObj.getTime() - (4 * 60 * 60 * 1000));
-      
-      // Formatear manualmente usando métodos locales (no UTC)
-      const day = venezuelanTime.getDate().toString().padStart(2, '0');
-      const month = (venezuelanTime.getMonth() + 1).toString().padStart(2, '0');
-      const year = venezuelanTime.getFullYear();
-      const hours = venezuelanTime.getHours();
-      const minutes = venezuelanTime.getMinutes().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      const displayHours = hours % 12 || 12;
-      
-      return `${day}/${month}/${year} a las ${displayHours}:${minutes} ${ampm}`;
-    } catch (error) {
-      console.error('Error formateando fecha para correo:', error);
-      return date;
-    }
-  }
   async verifyConnection() {
     try {
       await this.transporter.verify();
@@ -222,11 +189,13 @@ class EmailService {
    */
   async sendRequestConfirmation(request, user) {
     try {
-      const formattedDate = this.formatDateManual(request.created_at);
+      // Formatear fecha de creación usando DateHelper en GMT-4
+      const formattedDate = DateHelper.formatDateTime(request.created_at);
       
       let mudanzaDetails = '';
       if (request.request_type.includes('Mudanza')) {
-        const moveDate = moment(request.move_date).format('DD/MM/YYYY');
+        // Formatear move_date usando DateHelper en GMT-4
+        const moveDate = DateHelper.formatDisplay(request.move_date);
         mudanzaDetails = `
           <div class="info-box">
             <h3 style="margin-top: 0; color: ${this.primaryColor};">Detalles de la Mudanza</h3>
@@ -313,7 +282,8 @@ class EmailService {
    */
   async sendRequestResponse(request, user) {
     try {
-      const formattedDate = this.formatDateManual(request.updated_at);
+      // Formatear fecha de actualización usando DateHelper en GMT-4
+      const formattedDate = DateHelper.formatDateTime(request.updated_at);
       
       let statusColor = this.secondaryColor;
       let statusText = request.status;

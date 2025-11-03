@@ -11,11 +11,24 @@ const dbConfig = {
   charset: 'utf8mb4',
   timezone: '-04:00', // GMT-4
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  dateStrings: false, // Devolver fechas como objetos Date
+  supportBigNumbers: true,
+  bigNumberStrings: true
 };
 
 // Crear pool de conexiones
 const pool = mysql.createPool(dbConfig);
+
+// Configurar timezone de la sesión MySQL a GMT-4 al obtener conexión
+const configureConnection = async (connection) => {
+  try {
+    await connection.query(`SET time_zone = '-04:00'`);
+    console.log('✅ Timezone de MySQL configurado a GMT-4');
+  } catch (error) {
+    console.error('Error configurando timezone de MySQL:', error);
+  }
+};
 
 // Función para autenticar la conexión
 const authenticate = async () => {
@@ -32,19 +45,30 @@ const authenticate = async () => {
 
 // Función para ejecutar consultas
 const query = async (sql, params = []) => {
+  let connection;
   try {
-    const [rows] = await pool.execute(sql, params);
+    connection = await pool.getConnection();
+    // Configurar timezone si no está configurado
+    await connection.query(`SET time_zone = '-04:00'`);
+    const [rows] = await connection.execute(sql, params);
     return rows;
   } catch (error) {
     console.error('Error en consulta SQL:', error);
     throw error;
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
 // Función para obtener una conexión del pool
 const getConnection = async () => {
   try {
-    return await pool.getConnection();
+    const connection = await pool.getConnection();
+    // Configurar timezone de la conexión
+    await configureConnection(connection);
+    return connection;
   } catch (error) {
     console.error('Error al obtener conexión:', error);
     throw error;

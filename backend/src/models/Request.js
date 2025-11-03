@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const moment = require('moment-timezone');
+const DateHelper = require('../utils/dateHelper');
 
 // Configurar zona horaria para Venezuela (GMT-4)
 moment.tz.setDefault('America/Caracas');
@@ -42,12 +43,19 @@ class RequestModel {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Recibida', NOW(), NOW())
     `;
 
+    // Convertir move_date a formato DATE (YYYY-MM-DD) en GMT-4
+    let moveDateFormatted = null;
+    if (move_date) {
+      moveDateFormatted = DateHelper.toDateOnly(move_date);
+      console.log(`DEBUG create: move_date original=${move_date}, formatted=${moveDateFormatted}`);
+    }
+
     // Convertir undefined a null para campos opcionales
     const params = [
       wp_user_id, 
       request_type, 
       details, 
-      move_date || null,
+      moveDateFormatted,
       transporter_name || null, 
       transporter_id_card || null, 
       vehicle_brand || null,
@@ -78,7 +86,10 @@ class RequestModel {
     `;
     
     const results = await this.db.query(sql, [id]);
-    return results.length > 0 ? results[0] : null;
+    if (results.length === 0) return null;
+    
+    // Formatear fechas para GMT-4
+    return this.formatRequestDates(results[0]);
   }
 
   /**
@@ -90,6 +101,42 @@ class RequestModel {
   safeParseInt(value, defaultValue = 0) {
     const parsed = parseInt(value, 10);
     return isNaN(parsed) ? defaultValue : parsed;
+  }
+
+  /**
+   * Formatear fechas de una solicitud para GMT-4
+   * @param {Object} request - Solicitud a formatear
+   * @returns {Object} - Solicitud con fechas formateadas
+   */
+  formatRequestDates(request) {
+    if (!request) return null;
+
+    const formatted = { ...request };
+
+    // Formatear move_date si existe (solo fecha, sin hora)
+    if (formatted.move_date) {
+      // La BD devuelve DATE como string "YYYY-MM-DD", interpretarlo en GMT-4
+      const moveDateMoment = DateHelper.parseDateString(formatted.move_date);
+      formatted.move_date_formatted = DateHelper.formatDisplay(moveDateMoment);
+      
+      // También mantener el ISO original para compatibilidad
+      formatted.move_date = DateHelper.toDateOnly(moveDateMoment);
+      
+      console.log(`DEBUG formatRequestDates: move_date original=${request.move_date}, formatted=${formatted.move_date}, display=${formatted.move_date_formatted}`);
+    }
+
+    // Formatear created_at y updated_at con hora
+    if (formatted.created_at) {
+      const createdMoment = moment.tz(formatted.created_at, 'America/Caracas');
+      formatted.created_at_formatted = DateHelper.formatDateTime(createdMoment);
+    }
+
+    if (formatted.updated_at) {
+      const updatedMoment = moment.tz(formatted.updated_at, 'America/Caracas');
+      formatted.updated_at_formatted = DateHelper.formatDateTime(updatedMoment);
+    }
+
+    return formatted;
   }
 
   /**
@@ -116,7 +163,9 @@ class RequestModel {
       LIMIT ${limitInt} OFFSET ${offsetInt}
     `;
     
-    return await this.db.query(sql, [wp_user_id]);
+    const results = await this.db.query(sql, [wp_user_id]);
+    // Formatear fechas para GMT-4
+    return results.map(request => this.formatRequestDates(request));
   }
 
   /**
@@ -161,7 +210,9 @@ class RequestModel {
     
     console.log('DEBUG SQL:', sql);
     
-    return await this.db.query(sql);
+    const results = await this.db.query(sql);
+    // Formatear fechas para GMT-4
+    return results.map(request => this.formatRequestDates(request));
   }
 
   /**
@@ -287,35 +338,25 @@ class RequestValidator {
           }),
         move_date: Joi.date().iso().required()
           .custom((value, helpers) => {
-            // Extraer solo la fecha sin considerar la hora o zona horaria
-            let dateStr;
-            if (typeof value === 'string') {
-              // Si viene como string "YYYY-MM-DD", usar directamente
-              dateStr = value.split('T')[0]; // Tomar solo la parte de fecha
-            } else {
-              // Si viene como objeto Date, convertir a string YYYY-MM-DD
-              dateStr = value.toISOString().split('T')[0];
+            // Usar DateHelper para validar en GMT-4
+            const parsedDate = DateHelper.parseDateString(value);
+            
+            if (!parsedDate || !parsedDate.isValid()) {
+              return helpers.error('date.base');
             }
             
-            // Crear fecha usando solo año, mes y día (sin hora)
-            const [year, month, day] = dateStr.split('-');
-            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            const dayOfWeek = date.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
-            
-            if (dayOfWeek !== 6) { // 6 = sábado
+            // Verificar que sea sábado en GMT-4
+            if (!DateHelper.isSaturday(parsedDate)) {
               return helpers.error('custom.saturday');
             }
             
-            // Verificar que sea futura comparando solo la fecha (sin hora)
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const checkDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            checkDate.setHours(0, 0, 0, 0);
-            
-            if (checkDate <= today) {
+            // Verificar que sea futura en GMT-4
+            if (!DateHelper.isFuture(parsedDate)) {
               return helpers.error('custom.future');
             }
-            return value;
+            
+            // Retornar la fecha formateada como YYYY-MM-DD
+            return DateHelper.toDateOnly(parsedDate);
           })
           .messages({
             'date.base': 'La fecha debe ser válida',
