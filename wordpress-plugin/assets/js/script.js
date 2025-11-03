@@ -495,7 +495,8 @@
         // Renderizar item de solicitud
         renderRequestItem: function(request) {
             const statusClass = request.status.toLowerCase();
-            const formattedDate = this.formatVenezuelanDate(request.created_at);
+            // Usar campo _formatted si existe, sino formatear
+            const formattedDate = request.created_at_formatted || this.formatVenezuelanDate(request.created_at);
             
             return `
                 <div class="request-item ${statusClass}">
@@ -614,7 +615,8 @@
             
             let html = '';
             requests.forEach(request => {
-                const formattedDate = this.formatVenezuelanDateShort(request.created_at);
+                // Usar campo _formatted si existe, sino formatear
+                const formattedDate = request.created_at_formatted || this.formatVenezuelanDateShort(request.created_at);
                 const statusClass = request.status.toLowerCase();
                 
                 html += `
@@ -715,14 +717,17 @@
             const modal = $('#request-modal');
             const body = $('#modal-body');
             
-            const formattedDate = this.formatVenezuelanDate(request.created_at);
+            // Usar campo _formatted si existe, sino formatear
+            const formattedDate = request.created_at_formatted || this.formatVenezuelanDate(request.created_at);
             
             let mudanzaInfo = '';
             if (request.request_type.includes('Mudanza')) {
+                // Usar campo _formatted si existe, sino formatear
+                const moveDateFormatted = request.move_date_formatted || this.formatVenezuelanDateOnly(request.move_date);
                 mudanzaInfo = `
                     <div class="mudanza-info">
                         <h4>Información de la Mudanza</h4>
-                        <p><strong>Fecha:</strong> ${this.formatVenezuelanDateOnly(request.move_date)}</p>
+                        <p><strong>Fecha:</strong> ${moveDateFormatted}</p>
                         <p><strong>Transportista:</strong> ${request.transporter_name} (C.I. ${request.transporter_id_card})</p>
                         <p><strong>Vehículo:</strong> ${request.vehicle_brand} ${request.vehicle_model} - ${request.vehicle_color}</p>
                         <p><strong>Placa:</strong> ${request.vehicle_plate}</p>

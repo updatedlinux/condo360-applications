@@ -35,10 +35,16 @@ function formatDatesInObject(obj) {
     const formatted = {};
     
     for (const [key, value] of Object.entries(obj)) {
-      if (isDateField(key) && value) {
+      // Si el campo ya tiene versión formateada, no formatear de nuevo
+      if (key.endsWith('_formatted')) {
+        formatted[key] = value;
+      } else if (isDateField(key) && value && !isAlreadyFormatted(value)) {
+        // Solo formatear si no está ya formateado
         formatted[key] = formatDate(value);
-        // También agregar versión formateada legible
-        formatted[key + '_formatted'] = formatDateReadable(value);
+        // Solo agregar _formatted si no existe ya
+        if (!obj[key + '_formatted']) {
+          formatted[key + '_formatted'] = formatDateReadable(value);
+        }
       } else if (typeof value === 'object') {
         formatted[key] = formatDatesInObject(value);
       } else {
@@ -50,6 +56,27 @@ function formatDatesInObject(obj) {
   }
   
   return obj;
+}
+
+/**
+ * Verificar si una fecha ya está formateada (es string legible, no ISO)
+ * @param {any} value - Valor a verificar
+ * @returns {boolean} - True si ya está formateado
+ */
+function isAlreadyFormatted(value) {
+  if (typeof value !== 'string') return false;
+  
+  // Si es un string que parece fecha formateada (DD/MM/YYYY) o tiene formato legible
+  if (value.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+    return true;
+  }
+  
+  // Si contiene "a las" es un formato legible
+  if (value.includes('a las')) {
+    return true;
+  }
+  
+  return false;
 }
 
 /**
@@ -94,7 +121,17 @@ function formatDate(date) {
  */
 function formatDateReadable(date) {
   try {
-    return moment(date).tz('America/Caracas').format('DD/MM/YYYY [a las] h:mm A');
+    // Si ya está formateado, retornarlo como está
+    if (typeof date === 'string' && isAlreadyFormatted(date)) {
+      return date;
+    }
+    
+    // Si es un objeto Date o string ISO, formatearlo
+    const momentDate = moment.tz(date, 'America/Caracas');
+    if (!momentDate.isValid()) {
+      return date;
+    }
+    return momentDate.format('DD/MM/YYYY [a las] h:mm A');
   } catch (error) {
     return date;
   }
