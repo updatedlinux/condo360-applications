@@ -708,10 +708,18 @@
                 url: this.config.apiUrl + '/requests/' + requestId,
                 type: 'GET',
                 success: (response) => {
-                    console.log('DEBUG handleViewRequest: response=', response);
+                    console.log('DEBUG handleViewRequest: response completo=', response);
                     if (response.success) {
                         console.log('DEBUG handleViewRequest: response.data=', response.data);
-                        this.showRequestModal(response.data);
+                        console.log('DEBUG handleViewRequest: response.data.created_at_formatted=', response.data.created_at_formatted);
+                        console.log('DEBUG handleViewRequest: response.data.move_date_formatted=', response.data.move_date_formatted);
+                        
+                        // Asegurarse de que estamos pasando el objeto correcto
+                        const request = response.data;
+                        console.log('DEBUG handleViewRequest: request object antes de pasar a showRequestModal=', request);
+                        console.log('DEBUG handleViewRequest: request.created_at_formatted ANTES=', request.created_at_formatted);
+                        
+                        this.showRequestModal(request);
                     }
                 }
             });
@@ -722,33 +730,41 @@
             const modal = $('#request-modal');
             const body = $('#modal-body');
             
+            console.log('DEBUG showRequestModal: request completo=', request);
             console.log('DEBUG showRequestModal: request.created_at=', request.created_at);
             console.log('DEBUG showRequestModal: request.created_at_formatted=', request.created_at_formatted);
+            console.log('DEBUG showRequestModal: typeof created_at_formatted=', typeof request.created_at_formatted);
+            console.log('DEBUG showRequestModal: created_at_formatted truthy?', !!request.created_at_formatted);
             
-            // SIEMPRE usar campo _formatted si existe (backend ya lo formateó correctamente)
-            // Solo usar fallback si realmente no existe
-            let formattedDate;
-            if (request.created_at_formatted) {
-                formattedDate = request.created_at_formatted;
-                console.log('DEBUG showRequestModal: Usando created_at_formatted del backend:', formattedDate);
-            } else {
+            // FORZAR uso de campo _formatted si existe (backend ya lo formateó correctamente)
+            // El backend SIEMPRE envía estos campos, así que usarlos directamente
+            let formattedDate = request.created_at_formatted || request['created_at_formatted'] || null;
+            
+            if (!formattedDate) {
+                // Fallback solo si realmente no existe
                 formattedDate = this.formatVenezuelanDate(request.created_at);
-                console.log('DEBUG showRequestModal: Fallback a formatVenezuelanDate:', formattedDate);
+                console.log('DEBUG showRequestModal: ❌ Fallback a formatVenezuelanDate:', formattedDate);
+            } else {
+                console.log('DEBUG showRequestModal: ✅ Usando created_at_formatted del backend:', formattedDate);
             }
             
             let mudanzaInfo = '';
             if (request.request_type.includes('Mudanza')) {
                 console.log('DEBUG showRequestModal: request.move_date=', request.move_date);
                 console.log('DEBUG showRequestModal: request.move_date_formatted=', request.move_date_formatted);
+                console.log('DEBUG showRequestModal: typeof move_date_formatted=', typeof request.move_date_formatted);
+                console.log('DEBUG showRequestModal: move_date_formatted truthy?', !!request.move_date_formatted);
                 
-                // SIEMPRE usar campo _formatted si existe
-                let moveDateFormatted;
-                if (request.move_date_formatted) {
-                    moveDateFormatted = request.move_date_formatted;
-                    console.log('DEBUG showRequestModal: Usando move_date_formatted del backend:', moveDateFormatted);
-                } else {
+                // FORZAR uso de campo _formatted si existe
+                // El backend SIEMPRE envía estos campos, así que usarlos directamente
+                let moveDateFormatted = request.move_date_formatted || request['move_date_formatted'] || null;
+                
+                if (!moveDateFormatted) {
+                    // Fallback solo si realmente no existe
                     moveDateFormatted = this.formatVenezuelanDateOnly(request.move_date);
-                    console.log('DEBUG showRequestModal: Fallback a formatVenezuelanDateOnly:', moveDateFormatted);
+                    console.log('DEBUG showRequestModal: ❌ Fallback a formatVenezuelanDateOnly:', moveDateFormatted);
+                } else {
+                    console.log('DEBUG showRequestModal: ✅ Usando move_date_formatted del backend:', moveDateFormatted);
                 }
                 mudanzaInfo = `
                     <div class="mudanza-info">
