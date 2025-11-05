@@ -29,10 +29,12 @@
             this.initFormValidation();
             this.loadUserRequests();
             this.loadAdminData();
+            this.initVigilancia();
             
             // Vincular eventos a modales existentes en el HTML
             this.bindModalEvents('#request-modal');
             this.bindModalEvents('#response-modal');
+            this.bindModalEvents('#vigilancia-modal');
             
             // Agregar botón de prueba temporal para debug
             if (window.location.href.includes('debug')) {
@@ -85,6 +87,9 @@
             $(document).on('click', '.view-request', this.handleViewRequest.bind(this));
             $(document).on('click', '.respond-request', this.handleRespondRequest.bind(this));
             $('#response-form').on('submit', this.handleResponseSubmit.bind(this));
+            
+            // Panel de vigilancia
+            $(document).on('click', '.view-mudanza', this.handleViewMudanza.bind(this));
             
             // Modales - Cerrar con botones (delegación específica)
             $(document).on('click', '.modal-close', function(e) {
@@ -1109,6 +1114,288 @@
             
             // 6 = sábado en JavaScript (0 = domingo, 1 = lunes, ..., 6 = sábado)
             return date.getDay() === 6;
+        },
+        
+        // ========== FUNCIONES DE VIGILANCIA ==========
+        
+        // Estado de vigilancia
+        vigilanciaState: {
+            currentQuery: '',
+            currentPage: 1,
+            currentLimit: 50
+        },
+        
+        // Inicializar panel de vigilancia
+        initVigilancia: function() {
+            if (!$('#vigilancia-search-form').length) return;
+            
+            console.log('DEBUG: Inicializando panel de vigilancia');
+            this.bindVigilanciaEvents();
+        },
+        
+        // Vincular eventos de vigilancia
+        bindVigilanciaEvents: function() {
+            // Formulario de búsqueda
+            $('#vigilancia-search-form').on('submit', this.handleVigilanciaSearch.bind(this));
+            
+            // Botón limpiar búsqueda
+            $('#clear-search').on('click', this.handleClearSearch.bind(this));
+            
+            // Modal de vigilancia
+            this.bindModalEvents('#vigilancia-modal');
+            
+            // Paginación
+            $(document).on('click', '.vigilancia-pagination .page-link', this.handleVigilanciaPagination.bind(this));
+        },
+        
+        // Manejar búsqueda de vigilancia
+        handleVigilanciaSearch: function(e) {
+            e.preventDefault();
+            
+            if (this.state.isLoading) return;
+            
+            const query = $('#search-query').val().trim();
+            
+            if (!query || query.length < 2) {
+                alert('Por favor ingrese al menos 2 caracteres para buscar');
+                return;
+            }
+            
+            this.vigilanciaState.currentQuery = query;
+            this.vigilanciaState.currentPage = 1;
+            
+            this.loadVigilanciaResults(query, 1);
+        },
+        
+        // Cargar resultados de búsqueda
+        loadVigilanciaResults: function(query, page = 1) {
+            if (this.state.isLoading) return;
+            
+            this.state.isLoading = true;
+            
+            const $form = $('#vigilancia-search-form');
+            const $btn = $form.find('button[type="submit"]');
+            const $btnText = $btn.find('.btn-text');
+            const $btnLoading = $btn.find('.btn-loading');
+            
+            $btnText.hide();
+            $btnLoading.show();
+            $btn.prop('disabled', true);
+            
+            const limit = this.vigilanciaState.currentLimit;
+            const offset = (page - 1) * limit;
+            
+            console.log('DEBUG loadVigilanciaResults: query=', query, 'page=', page, 'limit=', limit);
+            
+            $.ajax({
+                url: this.config.apiUrl + '/requests/search',
+                type: 'GET',
+                data: {
+                    q: query,
+                    page: page,
+                    limit: limit
+                },
+                success: (response) => {
+                    console.log('DEBUG loadVigilanciaResults: response=', response);
+                    
+                    if (response.success && response.data && response.data.length > 0) {
+                        this.renderVigilanciaResults(response.data, response.pagination);
+                        $('#vigilancia-results').show();
+                        $('#vigilancia-no-results').hide();
+                        $('#clear-search').show();
+                    } else {
+                        $('#vigilancia-results').hide();
+                        $('#vigilancia-no-results').show();
+                        $('#clear-search').show();
+                    }
+                },
+                error: (xhr, status, error) => {
+                    console.error('DEBUG loadVigilanciaResults: error=', error, xhr);
+                    alert('Error al realizar la búsqueda. Por favor intente nuevamente.');
+                    $('#vigilancia-results').hide();
+                    $('#vigilancia-no-results').hide();
+                },
+                complete: () => {
+                    this.state.isLoading = false;
+                    $btnText.show();
+                    $btnLoading.hide();
+                    $btn.prop('disabled', false);
+                }
+            });
+        },
+        
+        // Renderizar resultados de vigilancia
+        renderVigilanciaResults: function(mudanzas, pagination) {
+            const $list = $('#vigilancia-requests-list');
+            $list.empty();
+            
+            // Actualizar contador
+            const countText = `Se encontraron ${pagination.total} mudanza(s)`;
+            $('#results-count').text(countText);
+            
+            mudanzas.forEach((mudanza) => {
+                const row = this.renderVigilanciaRow(mudanza);
+                $list.append(row);
+            });
+            
+            // Renderizar paginación
+            this.renderVigilanciaPagination(pagination);
+        },
+        
+        // Renderizar una fila de resultado
+        renderVigilanciaRow: function(mudanza) {
+            const statusClass = mudanza.status.toLowerCase();
+            const statusText = mudanza.status;
+            
+            // Usar campos _formatted si existen
+            const moveDate = mudanza.move_date_formatted || mudanza.move_date || 'N/A';
+            
+            // Formatear vehículo
+            const vehiculo = mudanza.vehicle_brand && mudanza.vehicle_model 
+                ? `${mudanza.vehicle_brand} ${mudanza.vehicle_model}` 
+                : 'N/A';
+            
+            return $(`
+                <tr>
+                    <td>#${mudanza.id}</td>
+                    <td>
+                        <strong>${mudanza.display_name || 'N/A'}</strong><br>
+                        <small>${mudanza.user_email || ''}</small>
+                    </td>
+                    <td>${mudanza.request_type}</td>
+                    <td>${moveDate}</td>
+                    <td>
+                        <span class="request-status ${statusClass}">${statusText}</span>
+                    </td>
+                    <td>${mudanza.transporter_name || 'N/A'}</td>
+                    <td>${vehiculo}</td>
+                    <td>${mudanza.vehicle_plate || 'N/A'}</td>
+                    <td>${mudanza.driver_name || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-small view-mudanza" data-id="${mudanza.id}">
+                            Ver Detalles
+                        </button>
+                    </td>
+                </tr>
+            `);
+        },
+        
+        // Renderizar paginación de vigilancia
+        renderVigilanciaPagination: function(pagination) {
+            const $pagination = $('#vigilancia-pagination');
+            $pagination.empty();
+            
+            if (pagination.totalPages <= 1) return;
+            
+            let html = '<div class="pagination">';
+            
+            // Botón anterior
+            if (pagination.page > 1) {
+                html += `<button class="page-link" data-page="${pagination.page - 1}">« Anterior</button>`;
+            }
+            
+            // Números de página
+            for (let i = 1; i <= pagination.totalPages; i++) {
+                if (i === pagination.page) {
+                    html += `<span class="page-link active">${i}</span>`;
+                } else if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+                    html += `<button class="page-link" data-page="${i}">${i}</button>`;
+                } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+                    html += `<span class="page-link">...</span>`;
+                }
+            }
+            
+            // Botón siguiente
+            if (pagination.page < pagination.totalPages) {
+                html += `<button class="page-link" data-page="${pagination.page + 1}">Siguiente »</button>`;
+            }
+            
+            html += '</div>';
+            $pagination.html(html);
+        },
+        
+        // Manejar paginación de vigilancia
+        handleVigilanciaPagination: function(e) {
+            e.preventDefault();
+            const page = parseInt($(e.target).data('page'));
+            if (page && page > 0) {
+                this.vigilanciaState.currentPage = page;
+                this.loadVigilanciaResults(this.vigilanciaState.currentQuery, page);
+            }
+        },
+        
+        // Mostrar modal de detalles de mudanza
+        showVigilanciaModal: function(mudanza) {
+            const modal = $('#vigilancia-modal');
+            const body = $('#vigilancia-modal-body');
+            
+            // Usar campos _formatted si existen
+            const moveDate = mudanza.move_date_formatted || mudanza.move_date || 'N/A';
+            const createdAt = mudanza.created_at_formatted || mudanza.created_at || 'N/A';
+            
+            const html = `
+                <div class="request-detail">
+                    <div class="detail-header">
+                        <h4>Mudanza #${mudanza.id}</h4>
+                        <span class="request-status ${mudanza.status.toLowerCase()}">${mudanza.status}</span>
+                    </div>
+                    <div class="detail-info">
+                        <p><strong>Propietario:</strong> ${mudanza.display_name || 'N/A'}</p>
+                        <p><strong>Correo:</strong> ${mudanza.user_email || 'N/A'}</p>
+                        <p><strong>Tipo:</strong> ${mudanza.request_type}</p>
+                        <p><strong>Fecha de Mudanza:</strong> ${moveDate}</p>
+                        <p><strong>Estado:</strong> ${mudanza.status}</p>
+                        ${mudanza.response ? `<p><strong>Respuesta:</strong> ${mudanza.response}</p>` : ''}
+                        <p><strong>Fecha de Solicitud:</strong> ${createdAt}</p>
+                    </div>
+                    <div class="mudanza-info">
+                        <h4>Información de la Mudanza</h4>
+                        <p><strong>Transportista:</strong> ${mudanza.transporter_name || 'N/A'} (C.I. ${mudanza.transporter_id_card || 'N/A'})</p>
+                        <p><strong>Vehículo:</strong> ${mudanza.vehicle_brand || 'N/A'} ${mudanza.vehicle_model || ''} - ${mudanza.vehicle_color || 'N/A'}</p>
+                        <p><strong>Placa:</strong> ${mudanza.vehicle_plate || 'N/A'}</p>
+                        <p><strong>Chofer:</strong> ${mudanza.driver_name || 'N/A'} (C.I. ${mudanza.driver_id_card || 'N/A'})</p>
+                    </div>
+                    ${mudanza.details ? `
+                        <div class="details-section">
+                            <h4>Detalles</h4>
+                            <div class="details-text">${mudanza.details}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            body.html(html);
+            modal.show();
+        },
+        
+        // Limpiar búsqueda
+        handleClearSearch: function() {
+            $('#search-query').val('');
+            $('#vigilancia-results').hide();
+            $('#vigilancia-no-results').hide();
+            $('#clear-search').hide();
+            this.vigilanciaState.currentQuery = '';
+            this.vigilanciaState.currentPage = 1;
+        },
+        
+        // Manejar ver detalles de mudanza
+        handleViewMudanza: function(e) {
+            const mudanzaId = $(e.target).data('id');
+            
+            $.ajax({
+                url: this.config.apiUrl + '/requests/' + mudanzaId,
+                type: 'GET',
+                success: (response) => {
+                    console.log('DEBUG handleViewMudanza: response=', response);
+                    if (response.success) {
+                        this.showVigilanciaModal(response.data);
+                    }
+                },
+                error: (xhr, status, error) => {
+                    console.error('DEBUG handleViewMudanza: error=', error, xhr);
+                    alert('Error al cargar los detalles de la mudanza');
+                }
+            });
         }
     };
     

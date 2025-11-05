@@ -28,7 +28,8 @@
 
 /* Contenedor principal */
 .condo360-solicitudes-form,
-.condo360-admin-panel {
+.condo360-admin-panel,
+.condo360-vigilancia-panel {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;

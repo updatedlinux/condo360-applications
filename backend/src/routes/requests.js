@@ -105,6 +105,14 @@ router.get('/', (req, res, next) => {
 });
 
 /**
+ * GET /api/requests/search
+ * Buscar mudanzas por nombre/email del propietario
+ */
+router.get('/search', (req, res, next) => {
+  requestController.searchMudanzas(req, res, next);
+});
+
+/**
  * GET /api/requests/stats
  * Obtener estadísticas de solicitudes
  */

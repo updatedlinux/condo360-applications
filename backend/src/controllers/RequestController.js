@@ -404,6 +404,97 @@ class RequestController {
 
   /**
    * @swagger
+   * /api/requests/search:
+   *   get:
+   *     summary: Buscar mudanzas por nombre/email del propietario (solo futuras)
+   *     tags: [Solicitudes]
+   *     parameters:
+   *       - in: query
+   *         name: q
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Término de búsqueda (nombre, apellido o email del propietario)
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *         description: Número de página
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           default: 50
+   *         description: Límite de resultados por página
+   *     responses:
+   *       200:
+   *         description: Búsqueda realizada exitosamente
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     $ref: '#/components/schemas/Request'
+   *                 pagination:
+   *                   type: object
+   *                   properties:
+   *                     page:
+   *                       type: integer
+   *                     limit:
+   *                       type: integer
+   *                     total:
+   *                       type: integer
+   *                     totalPages:
+   *                       type: integer
+   *       400:
+   *         description: Término de búsqueda requerido
+   */
+  async searchMudanzas(req, res, next) {
+    try {
+      const { q } = req.query;
+      
+      if (!q || q.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          error: 'Término de búsqueda requerido',
+          message: 'Debe proporcionar un término de búsqueda (q)'
+        });
+      }
+
+      const { page = 1, limit = 50 } = req.query;
+      const limitInt = parseInt(limit, 10) || 50;
+      const pageInt = parseInt(page, 10) || 1;
+      const offset = (pageInt - 1) * limitInt;
+
+      // Buscar mudanzas
+      const mudanzas = await this.requestModel.searchMudanzasByUser(q.trim(), limitInt, offset);
+      const total = await this.requestModel.countSearchMudanzasByUser(q.trim());
+
+      const totalPages = Math.ceil(total / limitInt);
+
+      res.json({
+        success: true,
+        data: mudanzas,
+        pagination: {
+          page: pageInt,
+          limit: limitInt,
+          total,
+          totalPages
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * @swagger
    * /api/requests/stats:
    *   get:
    *     summary: Obtener estadísticas de solicitudes

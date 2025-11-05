@@ -67,6 +67,7 @@ class Condo360Solicitudes {
         // Registrar shortcodes
         add_shortcode('condo360_solicitudes_form', array($this, 'shortcode_form'));
         add_shortcode('condo360_solicitudes_admin', array($this, 'shortcode_admin'));
+        add_shortcode('condo360_solicitudes_vigilancia', array($this, 'shortcode_vigilancia'));
     }
     
     /**
@@ -456,6 +457,115 @@ class Condo360Solicitudes {
             // Configurar per_page para el admin panel
             if (typeof condo360_ajax !== 'undefined') {
                 condo360_ajax.per_page = <?php echo intval($atts['per_page']); ?>;
+            }
+        });
+        </script>
+        <?php
+        return ob_get_clean();
+    }
+    
+    /**
+     * Shortcode para consulta de mudanzas por vigilancia
+     * Solo accesible para administradores de WordPress
+     */
+    public function shortcode_vigilancia($atts) {
+        // Verificar permisos de administrador
+        if (!current_user_can('manage_options')) {
+            return '<div class="condo360-error">' . __('No tiene permisos para acceder a esta sección.', 'condo360-solicitudes') . '</div>';
+        }
+        
+        ob_start();
+        ?>
+        <div class="condo360-vigilancia-panel">
+            <div class="condo360-header">
+                <h2><?php _e('Consulta de Mudanzas - Vigilancia', 'condo360-solicitudes'); ?></h2>
+                <p><?php _e('Busque mudanzas por nombre o correo del propietario', 'condo360-solicitudes'); ?></p>
+            </div>
+            
+            <div class="vigilancia-search-form">
+                <form id="vigilancia-search-form" class="condo360-form">
+                    <div class="form-group">
+                        <label for="search-query"><?php _e('Buscar por Nombre o Correo:', 'condo360-solicitudes'); ?> <span class="required">*</span></label>
+                        <input 
+                            type="text" 
+                            id="search-query" 
+                            name="q" 
+                            placeholder="<?php _e('Ingrese nombre completo o correo del propietario...', 'condo360-solicitudes'); ?>"
+                            required
+                        />
+                        <small class="help-text"><?php _e('Buscará en el nombre completo y correo electrónico del propietario', 'condo360-solicitudes'); ?></small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-text"><?php _e('Buscar', 'condo360-solicitudes'); ?></span>
+                            <span class="btn-loading" style="display: none;"><?php _e('Buscando...', 'condo360-solicitudes'); ?></span>
+                        </button>
+                        <button type="button" id="clear-search" class="btn btn-secondary" style="display: none;">
+                            <?php _e('Limpiar Búsqueda', 'condo360-solicitudes'); ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div id="vigilancia-results" class="vigilancia-results" style="display: none;">
+                <div class="results-header">
+                    <h3><?php _e('Resultados de la Búsqueda', 'condo360-solicitudes'); ?></h3>
+                    <div id="results-count"></div>
+                </div>
+                
+                <div class="vigilancia-table-container">
+                    <table class="condo360-vigilancia-table">
+                        <thead>
+                            <tr>
+                                <th><?php _e('ID', 'condo360-solicitudes'); ?></th>
+                                <th><?php _e('Propietario', 'condo360-solicitudes'); ?></th>
+                                <th><?php _e('Tipo', 'condo360-solicitudes'); ?></th>
+                                <th><?php _e('Fecha de Mudanza', 'condo360-solicitudes'); ?></th>
+                                <th><?php _e('Estado', 'condo360-solicitudes'); ?></th>
+                                <th><?php _e('Transportista', 'condo360-solicitudes'); ?></th>
+                                <th><?php _e('Vehículo', 'condo360-solicitudes'); ?></th>
+                                <th><?php _e('Placa', 'condo360-solicitudes'); ?></th>
+                                <th><?php _e('Chofer', 'condo360-solicitudes'); ?></th>
+                                <th><?php _e('Acciones', 'condo360-solicitudes'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody id="vigilancia-requests-list">
+                            <!-- Contenido dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="vigilancia-pagination" id="vigilancia-pagination"></div>
+            </div>
+            
+            <div id="vigilancia-no-results" class="vigilancia-no-results" style="display: none;">
+                <p><?php _e('No se encontraron mudanzas para el criterio de búsqueda ingresado.', 'condo360-solicitudes'); ?></p>
+                <p><small><?php _e('Solo se muestran mudanzas con fecha igual o superior a hoy.', 'condo360-solicitudes'); ?></small></p>
+            </div>
+        </div>
+        
+        <!-- Modal para detalles de mudanza (solo lectura) -->
+        <div id="vigilancia-modal" class="condo360-modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><?php _e('Detalles de la Mudanza', 'condo360-solicitudes'); ?></h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body" id="vigilancia-modal-body">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close"><?php _e('Cerrar', 'condo360-solicitudes'); ?></button>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Marcar que estamos en el panel de vigilancia
+            if (typeof condo360_ajax !== 'undefined') {
+                condo360_ajax.is_vigilancia = true;
             }
         });
         </script>

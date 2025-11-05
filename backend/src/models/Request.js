@@ -300,6 +300,86 @@ class RequestModel {
     const results = await this.db.query(sql, [wp_user_id]);
     return results.length > 0;
   }
+
+  /**
+   * Buscar mudanzas por nombre/email del propietario (solo futuras)
+   * @param {string} query - Término de búsqueda (nombre, apellido o email)
+   * @param {number} limit - Límite de resultados
+   * @param {number} offset - Offset para paginación
+   * @returns {Promise<Array>} - Lista de mudanzas (entrada y salida)
+   */
+  async searchMudanzasByUser(query, limit = 50, offset = 0) {
+    const limitInt = this.safeParseInt(limit, 50);
+    const offsetInt = this.safeParseInt(offset, 0);
+    
+    console.log(`DEBUG searchMudanzasByUser: query="${query}", limit=${limitInt}, offset=${offsetInt}`);
+    
+    // Obtener fecha actual en GMT-4 (Venezuela)
+    const DateHelper = require('../utils/dateHelper');
+    const today = DateHelper.toDateOnly(DateHelper.now());
+    
+    // Escapar el query para prevenir SQL injection
+    const escapedQuery = query.replace(/'/g, "''");
+    
+    // Buscar solo mudanzas (entrada y salida) con fecha >= hoy
+    // Buscar por display_name (nombre completo) o user_email
+    const sql = `
+      SELECT r.*, u.display_name, u.user_email, u.user_nicename
+      FROM condo360solicitudes_requests r
+      INNER JOIN wp_users u ON r.wp_user_id = u.ID
+      WHERE (
+        r.request_type = 'Mudanza - Entrada' OR r.request_type = 'Mudanza - Salida'
+      )
+      AND r.move_date >= ?
+      AND (
+        u.display_name LIKE ? OR u.user_email LIKE ?
+      )
+      ORDER BY r.move_date ASC, r.created_at DESC
+      LIMIT ${limitInt} OFFSET ${offsetInt}
+    `;
+    
+    const searchPattern = `%${escapedQuery}%`;
+    
+    console.log('DEBUG searchMudanzasByUser SQL:', sql);
+    console.log('DEBUG searchMudanzasByUser params:', [today, searchPattern, searchPattern]);
+    
+    const results = await this.db.query(sql, [today, searchPattern, searchPattern]);
+    
+    // Formatear fechas para GMT-4
+    return results.map(request => this.formatRequestDates(request));
+  }
+
+  /**
+   * Contar total de mudanzas encontradas por búsqueda
+   * @param {string} query - Término de búsqueda
+   * @returns {Promise<number>} - Total de resultados
+   */
+  async countSearchMudanzasByUser(query) {
+    // Obtener fecha actual en GMT-4 (Venezuela)
+    const DateHelper = require('../utils/dateHelper');
+    const today = DateHelper.toDateOnly(DateHelper.now());
+    
+    // Escapar el query para prevenir SQL injection
+    const escapedQuery = query.replace(/'/g, "''");
+    
+    const sql = `
+      SELECT COUNT(*) as total
+      FROM condo360solicitudes_requests r
+      INNER JOIN wp_users u ON r.wp_user_id = u.ID
+      WHERE (
+        r.request_type = 'Mudanza - Entrada' OR r.request_type = 'Mudanza - Salida'
+      )
+      AND r.move_date >= ?
+      AND (
+        u.display_name LIKE ? OR u.user_email LIKE ?
+      )
+    `;
+    
+    const searchPattern = `%${escapedQuery}%`;
+    const results = await this.db.query(sql, [today, searchPattern, searchPattern]);
+    
+    return results[0].total || 0;
+  }
 }
 
 /**
