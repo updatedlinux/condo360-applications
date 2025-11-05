@@ -530,7 +530,6 @@ class Condo360Solicitudes {
                     <table class="condo360-vigilancia-table">
                         <thead>
                             <tr>
-                                <th><?php _e('ID', 'condo360-solicitudes'); ?></th>
                                 <th><?php _e('Propietario', 'condo360-solicitudes'); ?></th>
                                 <th><?php _e('Tipo', 'condo360-solicitudes'); ?></th>
                                 <th><?php _e('Fecha de Mudanza', 'condo360-solicitudes'); ?></th>

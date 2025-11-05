@@ -1321,21 +1321,20 @@
             
             return $(`
                 <tr>
-                    <td>#${mudanza.id}</td>
-                    <td>
+                    <td data-label="Propietario">
                         <strong>${mudanza.display_name || 'N/A'}</strong><br>
                         <small>${mudanza.user_email || ''}</small>
                     </td>
-                    <td>${mudanza.request_type}</td>
-                    <td>${moveDate}</td>
-                    <td>
+                    <td data-label="Tipo">${mudanza.request_type}</td>
+                    <td data-label="Fecha de Mudanza">${moveDate}</td>
+                    <td data-label="Estado">
                         <span class="request-status ${statusClass}">${statusText}</span>
                     </td>
-                    <td>${mudanza.transporter_name || 'N/A'}</td>
-                    <td>${vehiculo}</td>
-                    <td>${mudanza.vehicle_plate || 'N/A'}</td>
-                    <td>${mudanza.driver_name || 'N/A'}</td>
-                    <td>
+                    <td data-label="Transportista">${mudanza.transporter_name || 'N/A'}</td>
+                    <td data-label="Vehículo">${vehiculo}</td>
+                    <td data-label="Placa">${mudanza.vehicle_plate || 'N/A'}</td>
+                    <td data-label="Chofer">${mudanza.driver_name || 'N/A'}</td>
+                    <td data-label="Acciones">
                         <button class="btn btn-small view-mudanza" data-id="${mudanza.id}">
                             Ver Detalles
                         </button>

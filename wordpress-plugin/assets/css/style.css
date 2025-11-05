@@ -868,3 +868,294 @@
     padding-right: 40px;
     opacity: 0.7;
 }
+
+/* ========== ESTILOS PARA TABLA DE VIGILANCIA ========== */
+
+/* Formulario de búsqueda */
+.vigilancia-search-form {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--condo360-gray-50);
+    border-radius: var(--condo360-border-radius);
+}
+
+.vigilancia-search-form .form-group {
+    margin-bottom: 15px;
+}
+
+.vigilancia-search-form input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid var(--condo360-gray-300);
+    border-radius: var(--condo360-border-radius);
+    transition: border-color 0.2s;
+}
+
+.vigilancia-search-form input[type="text"]:focus {
+    outline: none;
+    border-color: var(--condo360-primary);
+}
+
+/* Resultados de búsqueda */
+.vigilancia-results {
+    margin-top: 30px;
+}
+
+.results-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--condo360-gray-200);
+}
+
+.results-header h3 {
+    color: var(--condo360-primary);
+    margin: 0 0 10px 0;
+    font-size: 24px;
+}
+
+#results-count {
+    color: var(--condo360-gray-600);
+    font-size: 14px;
+}
+
+/* Contenedor de tabla */
+.vigilancia-table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--condo360-gray-200);
+    border-radius: var(--condo360-border-radius);
+}
+
+/* Tabla de vigilancia */
+.condo360-vigilancia-table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+    background: #ffffff;
+    font-size: 14px;
+}
+
+.condo360-vigilancia-table thead {
+    background: var(--condo360-primary);
+    color: #ffffff;
+}
+
+.condo360-vigilancia-table th {
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.condo360-vigilancia-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--condo360-gray-200);
+    font-size: 14px;
+    color: var(--condo360-gray-700);
+    word-wrap: break-word;
+    max-width: 200px;
+}
+
+.condo360-vigilancia-table tbody tr:hover {
+    background: var(--condo360-gray-50);
+}
+
+.condo360-vigilancia-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.condo360-vigilancia-table td small {
+    color: var(--condo360-gray-500);
+    font-size: 12px;
+    display: block;
+    margin-top: 4px;
+}
+
+.condo360-vigilancia-table .btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Optimización de anchos de columna */
+.condo360-vigilancia-table th:nth-child(1),
+.condo360-vigilancia-table td:nth-child(1) {
+    min-width: 180px;
+    max-width: 200px;
+}
+
+.condo360-vigilancia-table th:nth-child(2),
+.condo360-vigilancia-table td:nth-child(2) {
+    min-width: 120px;
+}
+
+.condo360-vigilancia-table th:nth-child(3),
+.condo360-vigilancia-table td:nth-child(3) {
+    min-width: 110px;
+}
+
+.condo360-vigilancia-table th:nth-child(4),
+.condo360-vigilancia-table td:nth-child(4) {
+    min-width: 100px;
+}
+
+.condo360-vigilancia-table th:nth-child(5),
+.condo360-vigilancia-table td:nth-child(5) {
+    min-width: 130px;
+}
+
+.condo360-vigilancia-table th:nth-child(6),
+.condo360-vigilancia-table td:nth-child(6) {
+    min-width: 150px;
+}
+
+.condo360-vigilancia-table th:nth-child(7),
+.condo360-vigilancia-table td:nth-child(7) {
+    min-width: 90px;
+}
+
+.condo360-vigilancia-table th:nth-child(8),
+.condo360-vigilancia-table td:nth-child(8) {
+    min-width: 120px;
+}
+
+.condo360-vigilancia-table th:nth-child(9),
+.condo360-vigilancia-table td:nth-child(9) {
+    min-width: 100px;
+}
+
+/* No hay resultados */
+.vigilancia-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--condo360-gray-50);
+    border-radius: var(--condo360-border-radius);
+    margin-top: 30px;
+}
+
+.vigilancia-no-results p {
+    color: var(--condo360-gray-600);
+    margin: 10px 0;
+}
+
+.vigilancia-no-results p small {
+    color: var(--condo360-gray-500);
+    font-size: 12px;
+}
+
+/* Paginación de vigilancia */
+.vigilancia-pagination {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.vigilancia-pagination .pagination {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.vigilancia-pagination .page-link {
+    padding: 8px 12px;
+    border: 1px solid var(--condo360-gray-300);
+    background: #ffffff;
+    color: var(--condo360-primary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    min-width: 40px;
+    text-align: center;
+}
+
+.vigilancia-pagination .page-link:hover:not(.active):not(span) {
+    background: var(--condo360-primary);
+    color: #ffffff;
+    border-color: var(--condo360-primary);
+}
+
+.vigilancia-pagination .page-link.active {
+    background: var(--condo360-primary);
+    color: #ffffff;
+    border-color: var(--condo360-primary);
+    cursor: default;
+}
+
+.vigilancia-pagination .page-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive para vigilancia */
+@media (max-width: 1024px) {
+    .condo360-vigilancia-table {
+        min-width: 700px;
+    }
+    
+    .condo360-vigilancia-table th,
+    .condo360-vigilancia-table td {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 768px) {
+    .condo360-vigilancia-panel {
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .vigilancia-search-form {
+        padding: 15px;
+    }
+    
+    .condo360-vigilancia-table {
+        min-width: 600px;
+        font-size: 12px;
+    }
+    
+    .condo360-vigilancia-table th,
+    .condo360-vigilancia-table td {
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+    
+    .condo360-vigilancia-table th {
+        font-size: 11px;
+    }
+    
+    .vigilancia-pagination .pagination {
+        gap: 3px;
+    }
+    
+    .vigilancia-pagination .page-link {
+        padding: 6px 10px;
+        font-size: 12px;
+        min-width: 35px;
+    }
+}
+
+@media (max-width: 480px) {
+    .condo360-vigilancia-table {
+        min-width: 550px;
+    }
+    
+    .condo360-vigilancia-table th,
+    .condo360-vigilancia-table td {
+        padding: 6px 4px;
+        font-size: 11px;
+    }
+    
+    .condo360-vigilancia-table .btn-small {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+}
