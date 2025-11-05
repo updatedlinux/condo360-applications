@@ -1122,7 +1122,8 @@
         vigilanciaState: {
             currentQuery: '',
             currentPage: 1,
-            currentLimit: 50
+            currentLimit: 50,
+            searchTimeout: null
         },
         
         // Inicializar panel de vigilancia
@@ -1135,8 +1136,41 @@
         
         // Vincular eventos de vigilancia
         bindVigilanciaEvents: function() {
+            const self = this;
+            
             // Formulario de búsqueda
             $('#vigilancia-search-form').on('submit', this.handleVigilanciaSearch.bind(this));
+            
+            // Búsqueda dinámica mientras se escribe (con debounce)
+            $('#search-query').on('input', function() {
+                const query = $(this).val().trim();
+                
+                // Limpiar timeout anterior
+                if (self.vigilanciaState.searchTimeout) {
+                    clearTimeout(self.vigilanciaState.searchTimeout);
+                }
+                
+                // Si el campo está vacío, limpiar resultados
+                if (query.length === 0) {
+                    $('#vigilancia-results').hide();
+                    $('#vigilancia-no-results').hide();
+                    $('#clear-search').hide();
+                    return;
+                }
+                
+                // Si tiene menos de 2 caracteres, no buscar
+                if (query.length < 2) {
+                    return;
+                }
+                
+                // Esperar 500ms después de que el usuario deje de escribir
+                self.vigilanciaState.searchTimeout = setTimeout(function() {
+                    console.log('DEBUG: Búsqueda dinámica activada, query=', query);
+                    self.vigilanciaState.currentQuery = query;
+                    self.vigilanciaState.currentPage = 1;
+                    self.loadVigilanciaResults(query, 1, false); // false = búsqueda automática
+                }, 500);
+            });
             
             // Botón limpiar búsqueda
             $('#clear-search').on('click', this.handleClearSearch.bind(this));
@@ -1148,9 +1182,14 @@
             $(document).on('click', '.vigilancia-pagination .page-link', this.handleVigilanciaPagination.bind(this));
         },
         
-        // Manejar búsqueda de vigilancia
+        // Manejar búsqueda de vigilancia (botón de búsqueda)
         handleVigilanciaSearch: function(e) {
             e.preventDefault();
+            
+            // Limpiar timeout de búsqueda dinámica si existe
+            if (this.vigilanciaState.searchTimeout) {
+                clearTimeout(this.vigilanciaState.searchTimeout);
+            }
             
             if (this.state.isLoading) return;
             
@@ -1161,15 +1200,20 @@
                 return;
             }
             
+            console.log('DEBUG handleVigilanciaSearch: Búsqueda manual, query=', query);
+            
             this.vigilanciaState.currentQuery = query;
             this.vigilanciaState.currentPage = 1;
             
-            this.loadVigilanciaResults(query, 1);
+            this.loadVigilanciaResults(query, 1, true); // true = búsqueda manual
         },
         
         // Cargar resultados de búsqueda
-        loadVigilanciaResults: function(query, page = 1) {
-            if (this.state.isLoading) return;
+        loadVigilanciaResults: function(query, page = 1, isManualSearch = false) {
+            if (this.state.isLoading) {
+                console.log('DEBUG loadVigilanciaResults: Ya hay una búsqueda en progreso, cancelando');
+                return;
+            }
             
             this.state.isLoading = true;
             
@@ -1177,15 +1221,22 @@
             const $btn = $form.find('button[type="submit"]');
             const $btnText = $btn.find('.btn-text');
             const $btnLoading = $btn.find('.btn-loading');
+            const $searchInput = $('#search-query');
             
-            $btnText.hide();
-            $btnLoading.show();
-            $btn.prop('disabled', true);
+            // Mostrar indicador de carga solo si es búsqueda manual o si no hay resultados aún
+            if (isManualSearch || !$('#vigilancia-results').is(':visible')) {
+                $btnText.hide();
+                $btnLoading.show();
+                $btn.prop('disabled', true);
+            }
+            
+            // Agregar clase de carga al campo de búsqueda
+            $searchInput.addClass('searching');
             
             const limit = this.vigilanciaState.currentLimit;
             const offset = (page - 1) * limit;
             
-            console.log('DEBUG loadVigilanciaResults: query=', query, 'page=', page, 'limit=', limit);
+            console.log('DEBUG loadVigilanciaResults: query=', query, 'page=', page, 'limit=', limit, 'isManual=', isManualSearch);
             
             $.ajax({
                 url: this.config.apiUrl + '/requests/search',
@@ -1211,15 +1262,28 @@
                 },
                 error: (xhr, status, error) => {
                     console.error('DEBUG loadVigilanciaResults: error=', error, xhr);
-                    alert('Error al realizar la búsqueda. Por favor intente nuevamente.');
+                    console.error('DEBUG loadVigilanciaResults: xhr.responseText=', xhr.responseText);
+                    
+                    // Solo mostrar alert si es búsqueda manual
+                    if (isManualSearch) {
+                        alert('Error al realizar la búsqueda. Por favor intente nuevamente.');
+                    }
+                    
                     $('#vigilancia-results').hide();
                     $('#vigilancia-no-results').hide();
                 },
                 complete: () => {
                     this.state.isLoading = false;
-                    $btnText.show();
-                    $btnLoading.hide();
-                    $btn.prop('disabled', false);
+                    
+                    // Restaurar botón solo si se había ocultado
+                    if (isManualSearch || !$('#vigilancia-results').is(':visible')) {
+                        $btnText.show();
+                        $btnLoading.hide();
+                        $btn.prop('disabled', false);
+                    }
+                    
+                    // Remover clase de carga del campo
+                    $searchInput.removeClass('searching');
                 }
             });
         },
@@ -1320,7 +1384,7 @@
             const page = parseInt($(e.target).data('page'));
             if (page && page > 0) {
                 this.vigilanciaState.currentPage = page;
-                this.loadVigilanciaResults(this.vigilanciaState.currentQuery, page);
+                this.loadVigilanciaResults(this.vigilanciaState.currentQuery, page, false); // false = no es búsqueda manual
             }
         },
         
@@ -1370,6 +1434,11 @@
         
         // Limpiar búsqueda
         handleClearSearch: function() {
+            // Limpiar timeout de búsqueda dinámica si existe
+            if (this.vigilanciaState.searchTimeout) {
+                clearTimeout(this.vigilanciaState.searchTimeout);
+            }
+            
             $('#search-query').val('');
             $('#vigilancia-results').hide();
             $('#vigilancia-no-results').hide();
