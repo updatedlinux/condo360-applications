@@ -68,6 +68,9 @@ class Condo360Solicitudes {
         add_shortcode('condo360_solicitudes_form', array($this, 'shortcode_form'));
         add_shortcode('condo360_solicitudes_admin', array($this, 'shortcode_admin'));
         add_shortcode('condo360_solicitudes_vigilancia', array($this, 'shortcode_vigilancia'));
+        
+        // Debug: Verificar registro de shortcode
+        error_log('DEBUG: Shortcode condo360_solicitudes_vigilancia registrado');
     }
     
     /**
@@ -469,10 +472,19 @@ class Condo360Solicitudes {
      * Solo accesible para administradores de WordPress
      */
     public function shortcode_vigilancia($atts) {
+        // Debug: Verificar que la función se está llamando
+        error_log('DEBUG shortcode_vigilancia: Función llamada');
+        
         // Verificar permisos de administrador
         if (!current_user_can('manage_options')) {
+            error_log('DEBUG shortcode_vigilancia: Usuario sin permisos. Current user: ' . (is_user_logged_in() ? wp_get_current_user()->user_login : 'no logged in'));
             return '<div class="condo360-error">' . __('No tiene permisos para acceder a esta sección.', 'condo360-solicitudes') . '</div>';
         }
+        
+        error_log('DEBUG shortcode_vigilancia: Usuario tiene permisos, generando HTML');
+        
+        // Asegurar que los scripts se carguen
+        $this->enqueue_scripts();
         
         ob_start();
         ?>
@@ -570,7 +582,9 @@ class Condo360Solicitudes {
         });
         </script>
         <?php
-        return ob_get_clean();
+        $output = ob_get_clean();
+        error_log('DEBUG shortcode_vigilancia: Output length = ' . strlen($output));
+        return $output;
     }
     
     /**
